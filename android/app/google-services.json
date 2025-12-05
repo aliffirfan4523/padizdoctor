@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "533916619628",
+    "project_id": "padizdoctor-fyp-6820b",
+    "storage_bucket": "padizdoctor-fyp-6820b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533916619628:android:991c2deda4c3df8833d949",
+        "android_client_info": {
+          "package_name": "com.example.padizdoctor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxcZg9ync1dwoMdQ0JWoV1y13d4vnFnJo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "533916619628-9a0hh99pt17fgctmrone29g12a1no7gs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.padizdoctor"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533916619628:android:3f9915bbbd9e355133d949",
+        "android_client_info": {
+          "package_name": "com.mygreen.padizdoctor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxcZg9ync1dwoMdQ0JWoV1y13d4vnFnJo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "533916619628-9a0hh99pt17fgctmrone29g12a1no7gs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.padizdoctor"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

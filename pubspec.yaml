@@ -1,0 +1,45 @@
+name: padizdoctor
+description: "A new Flutter project."
+
+# Prevent accidental publishing to pub.dev.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.6.1
+
+dependencies:
+  firebase_core: ^4.2.1
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  sidebarx: ^0.17.2
+  shared_preferences: ^2.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  
+  fonts:
+      - family: Poppins
+        fonts:
+          - asset: assets/fonts/Poppins-Regular.ttf
+          - asset: assets/fonts/Poppins-Bold.ttf
+            weight: 700
+          - asset: assets/fonts/Poppins-SemiBold.ttf
+            weight: 600
+  # Enable generation of localized Strings from arb files.
+  generate: true
+
+  assets:
+    # Add assets from the images directory to the application.
+    - assets/images/
+
+  
