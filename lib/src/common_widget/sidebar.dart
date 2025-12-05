@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sidebarx/sidebarx.dart';
 
 import '../settings/settings_view.dart';
+import 'color_theme.dart';
 
 class Sidebar extends StatelessWidget {
   const Sidebar({
@@ -18,52 +19,82 @@ class Sidebar extends StatelessWidget {
       showToggleButton: false,
       controller: _controller,
       theme: SidebarXTheme(
-        margin: const EdgeInsets.all(10),
+        margin: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: canvasColor,
+          color: PaddyColors.primaryGreen, // Main sidebar container
           borderRadius: BorderRadius.circular(20),
         ),
-        hoverColor: scaffoldBackgroundColor,
-        textStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-        selectedTextStyle: const TextStyle(color: Colors.white),
-        hoverTextStyle: const TextStyle(
-          color: Colors.white,
+
+        // ===== TEXT =====
+        textStyle: TextStyle(
+          color: Colors.white.withOpacity(0.75),
+          fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
-        itemTextPadding: const EdgeInsets.only(left: 30),
-        selectedItemTextPadding: const EdgeInsets.only(left: 30),
-        itemDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: canvasColor),
+        selectedTextStyle: const TextStyle(
+          color: PaddyColors.textDark, // Green-dominant text
+          fontWeight: FontWeight.w700,
         ),
+
+        itemTextPadding: const EdgeInsets.only(left: 24),
+        selectedItemTextPadding: const EdgeInsets.only(left: 24),
+
+        // ===== HOVER =====
+        hoverColor: PaddyColors.accentGreen.withOpacity(0.2),
+        hoverTextStyle: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,
+        ),
+
+        // ===== NORMAL ITEM =====
+        itemDecoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          color: PaddyColors.primaryGreen.withOpacity(0.2),
+        ),
+
+        // ===== SELECTED ITEM =====
         selectedItemDecoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: actionColor.withOpacity(0.37),
-          ),
-          gradient: const LinearGradient(
-            colors: [accentCanvasColor, canvasColor],
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [
+              PaddyColors.accentGreen, // Soft green highlight
+              PaddyColors.secondaryGreen.withOpacity(0.4),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.28),
-              blurRadius: 30,
-            )
+              color: PaddyColors.secondaryGreen.withOpacity(0.3),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
+
+        // ===== ICONS =====
         iconTheme: IconThemeData(
           color: Colors.white.withOpacity(0.7),
-          size: 20,
+          size: 22,
         ),
         selectedIconTheme: const IconThemeData(
-          color: Colors.white,
-          size: 20,
+          color: PaddyColors.lightGreen,
+          size: 22,
         ),
       ),
-      extendedTheme: const SidebarXTheme(
-        width: 200,
+
+      // ===== EXTENDED MODE =====
+      extendedTheme: SidebarXTheme(
+        width: 210,
         decoration: BoxDecoration(
-          color: canvasColor,
+          color: PaddyColors.primaryGreen, // Soft paddy field background
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: TextStyle(
+          fontWeight: FontWeight.w500,
+        ),
+        selectedTextStyle: const TextStyle(
+          fontWeight: FontWeight.w700,
         ),
       ),
       footerDivider: divider,
@@ -72,7 +103,7 @@ class Sidebar extends StatelessWidget {
           height: 100,
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Image.asset('assets/images/avatar.png'),
+            child: Placeholder(),
           ),
         );
       },
@@ -86,28 +117,27 @@ class Sidebar extends StatelessWidget {
           },
         ),
         SidebarXItem(
-          icon: Icons.search,
-          label: 'Search',
+          icon: Icons.work_history,
+          label: 'My Activity',
           onTap: () {
             Scaffold.of(context).closeDrawer();
           },
         ),
         const SidebarXItem(
-          icon: Icons.people,
-          label: 'People',
-        ),
-        SidebarXItem(
-          icon: Icons.settings,
-          label: 'Settings',
-          onTap: () {
-            Navigator.restorablePushNamed(context, SettingsView.routeName);
-          },
-        ),
-        const SidebarXItem(
-          iconWidget: FlutterLogo(size: 20),
-          label: 'Flutter',
+          icon: Icons.file_copy,
+          label: 'Diagnosis History',
         ),
       ],
+      footerBuilder: (context, extended) {
+        return ListTile(
+          leading: const Icon(Icons.settings, color: Colors.white),
+          title: const Text('Settings', style: TextStyle(color: Colors.white)),
+          onTap: () {
+            Scaffold.of(context).closeDrawer();
+            Navigator.restorablePushNamed(context, SettingsView.routeName);
+          },
+        );
+      },
     );
   }
 
@@ -124,10 +154,6 @@ class Sidebar extends StatelessWidget {
   }
 }
 
-const primaryColor = Color(0xFF685BFF);
-const canvasColor = Color(0xFF2E2E48);
-const scaffoldBackgroundColor = Color(0xFF464667);
-const accentCanvasColor = Color(0xFF3E3E61);
 const white = Colors.white;
 final actionColor = const Color(0xFF5F5FA7).withOpacity(0.6);
 final divider = Divider(color: white.withOpacity(0.3), height: 1);

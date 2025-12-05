@@ -4,6 +4,8 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/app_fonts.dart';
 import 'homepage/homepage_screen.dart';
+import 'intro/intro_page.dart';
+import 'intro/splash_decider.dart';
 import 'sample_feature/sample_item_details_view.dart';
 import 'sample_feature/sample_item_list_view.dart';
 import 'settings/settings_controller.dart';
@@ -63,6 +65,12 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
+          home: const SplashDecider(),
+
+          routes: {
+            "/intro": (_) => const IntroPage(),
+            "/home": (_) => HomepageView(), // your existing homepage
+          },
 
           // Define a function to handle named routes in order to support
           // Flutter web url navigation and deep linking.

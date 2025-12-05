@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/camera_gallery/gallery.dart';
 import 'package:sidebarx/sidebarx.dart';
 
 import '../common_widget/sidebar.dart';
@@ -40,34 +41,58 @@ class _HomepageViewState extends State<HomepageView> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Center(
-              child: Text(
-            "Welcome to PadizDoctor",
+          Text(
+            "Hi User",
             style: TextStyle(fontSize: 25),
-          )),
-          SizedBox(height: 20),
-          Divider(
-            thickness: 1,
-            indent: 40,
-            endIndent: 40,
           ),
+          Text(
+            "What can i help with?",
+            style: TextStyle(fontSize: 25),
+          ),
+          SizedBox(height: 20),
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Column(
-                children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
-                ],
+              IconButton(
+                onPressed: () => {},
+                icon: Column(
+                  children: [
+                    Icon(
+                      Icons.camera_enhance,
+                      size: 50,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Take picture',
+                      style: TextStyle(),
+                    ),
+                  ],
+                ),
               ),
               Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
+                  height: 80,
+                  child: VerticalDivider(
+                      color: const Color.fromARGB(255, 97, 97, 97))),
+              IconButton(
+                onPressed: () => {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (_) => GalleryPicker()))
+                },
+                icon: Column(
+                  children: [
+                    Icon(
+                      Icons.photo_library,
+                      size: 50,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Upload photo',
+                      style: TextStyle(),
+                    ),
+                  ],
                 ),
-              )
+              ),
             ],
           ),
           SizedBox(height: 20),
@@ -75,56 +100,51 @@ class _HomepageViewState extends State<HomepageView> {
             thickness: 1,
             indent: 40,
             endIndent: 40,
+            color: Color.fromARGB(255, 97, 97, 97),
           ),
           SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
+              IconButton(
+                onPressed: () => {},
+                icon: Column(
+                  children: [
+                    Icon(
+                      Icons.person,
+                      size: 50,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'My activity',
+                      style: TextStyle(),
+                    ),
+                  ],
                 ),
               ),
-              Column(
-                children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
-                ],
+              Container(
+                  height: 80,
+                  child: VerticalDivider(
+                      color: const Color.fromARGB(255, 97, 97, 97))),
+              IconButton(
+                onPressed: () => {},
+                icon: Column(
+                  children: [
+                    Icon(
+                      Icons.file_copy,
+                      size: 50,
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      'Diagnosis \nhistory',
+                      style: TextStyle(),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-          SizedBox(height: 20),
-          Divider(
-            thickness: 1,
-            indent: 40,
-            endIndent: 40,
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Column(
-                children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
-                ],
-              ),
-              Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
-                ),
-              )
-            ],
-          ),
-          SizedBox(height: 20),
-          TextButton(
-            onPressed: () {},
-            child: Text('Start'),
-          )
         ],
       ),
     );
