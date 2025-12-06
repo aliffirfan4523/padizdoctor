@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:padizdoctor/l10n/app_localizations.dart';
 
 import 'core/app_fonts.dart';
 import 'homepage/homepage_screen.dart';
