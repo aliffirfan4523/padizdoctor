@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/screens/signin_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroPage extends StatelessWidget {
@@ -99,7 +100,7 @@ class IntroPage extends StatelessWidget {
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => _finishIntro(context),
+            onPressed: () => SignInScreen(context),
             child: const Text("Continue"),
           )
         ],
