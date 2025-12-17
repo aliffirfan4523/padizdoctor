@@ -30,7 +30,51 @@ class _HomepageViewState extends State<HomepageView> {
         actions: [
           IconButton(
             icon: const Icon(Icons.person),
-            onPressed: () {},
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                builder: (context) => Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 40,
+                          backgroundImage: AssetImage(
+                              'assets/images/user_profile.png'), // Replace with your asset or NetworkImage
+                        ),
+                        SizedBox(width: 30),
+                        Text(
+                          'User Name', // Replace with actual user name
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 24),
+                    SizedBox(
+                      width: MediaQuery.sizeOf(context).width * 0.8,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            shadowColor: Colors.blueGrey),
+                        onPressed: () {
+                          // Add your logout logic here
+                          Navigator.of(context).pop();
+                        },
+                        icon: Icon(Icons.logout),
+                        label: Text('Logout'),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
           ),
         ],
       ),

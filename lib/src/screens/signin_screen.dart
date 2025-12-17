@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:padizdoctor/src/screens/auth_service.dart';
 import 'package:padizdoctor/src/screens/signup_screen.dart';
 
 import '../reusable_widgets/reusable_widget.dart';
@@ -14,6 +17,17 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   TextEditingController _passwordTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
+
+  Future<void> _signInToGoogle(GoogleSignInAccount user) async {
+    final googleAuth = await user.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      idToken: googleAuth.idToken,
+    );
+
+    await FirebaseAuth.instance.signInWithCredential(credential);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -47,7 +61,11 @@ class _SignInScreenState extends State<SignInScreen> {
                   height: 20,
                 ),
                 signInSignUpButton(context, true, () {}),
-                signUpOption()
+                signUpOption(),
+                ElevatedButton(
+                  onPressed: AuthService.instance.signInWithGoogle,
+                  child: const Text('Sign in with Google'),
+                )
               ],
             ),
           ),

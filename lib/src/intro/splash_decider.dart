@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -15,15 +16,24 @@ class _SplashDeciderState extends State<SplashDecider> {
   @override
   void initState() {
     super.initState();
-    checkFirstTime();
+    decideRoute();
   }
 
-  Future<void> checkFirstTime() async {
+  Future<void> decideRoute() async {
     final prefs = await SharedPreferences.getInstance();
     final isFirstTime = prefs.getBool("isFirstTime") ?? true;
 
+    final user = FirebaseAuth.instance.currentUser;
+
     setState(() {
-      _route = isFirstTime ? "/intro" : "/home";
+      if (isFirstTime) {
+        _route = "/intro";
+      } else if (user != null) {
+        _route = "/home";
+      } else {
+        _route = "/login";
+      }
+
       _loading = false;
     });
   }
