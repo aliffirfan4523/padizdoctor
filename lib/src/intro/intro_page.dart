@@ -100,7 +100,12 @@ class IntroPage extends StatelessWidget {
           ),
           SizedBox(height: 20),
           ElevatedButton(
-            onPressed: () => SignInScreen(context),
+            onPressed: () {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => SignInScreen(context)),
+              );
+            },
             child: const Text("Continue"),
           )
         ],
