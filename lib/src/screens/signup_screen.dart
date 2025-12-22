@@ -117,7 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       if (!doc.exists) {
                         await docRef.set({
                           'email': user.email,
-                          'fullName': user.displayName ?? 'No Name',
+                          'fullName': _userNameTextController.text.trim() ?? '',
                           'isAdmin': false,
                           'lastActive': DateTime.now(),
                           'phone': '',
