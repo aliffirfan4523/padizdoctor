@@ -1,6 +1,8 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
@@ -35,10 +37,58 @@ class AuthService {
   }
 
   /// Trigger Google UI
-  Future<void> signInWithGoogle() async {
-    await GoogleSignIn.instance.authenticate(
-      scopeHint: ['email'],
-    );
+  Future<UserCredential?> signInWithGoogle() async {
+    try {
+      UserCredential userCredential;
+
+      // 1. Perform Authentication
+      if (kIsWeb) {
+        final provider = GoogleAuthProvider();
+        userCredential = await FirebaseAuth.instance.signInWithPopup(provider);
+      } else {
+        // Note: Ensure GoogleSignIn().signIn() is used to get the account
+        final GoogleSignInAccount googleUser =
+            await GoogleSignIn.instance.authenticate(); // User canceled
+
+        final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          idToken: googleAuth.idToken,
+        );
+
+        userCredential =
+            await FirebaseAuth.instance.signInWithCredential(credential);
+      }
+
+      // 2. Firestore Logic
+      User? user = userCredential.user;
+
+      if (user != null) {
+        final docRef =
+            FirebaseFirestore.instance.collection('users').doc(user.uid);
+
+        final doc = await docRef.get();
+
+        if (!doc.exists) {
+          await docRef.set({
+            'email': user.email,
+            // Use Google's name if the controller isn't available
+            'fullName': user.displayName ?? '',
+            'isAdmin': false,
+            'lastActive': DateTime.now(),
+            'phone': user.phoneNumber ?? '',
+            'profilePicture': user.photoURL ?? '',
+          });
+        } else {
+          // Optional: Update lastActive even if user exists
+          await docRef.update({'lastActive': DateTime.now()});
+        }
+      }
+
+      return userCredential;
+    } catch (e) {
+      print("Google Sign-In Error: $e");
+      return null;
+    }
   }
 
   Future<void> signOut() async {

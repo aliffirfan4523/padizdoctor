@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:blur_detection/blur_detection.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -11,37 +12,51 @@ class GalleryPicker extends StatefulWidget {
 }
 
 class _GalleryPickerState extends State<GalleryPicker> {
-  XFile? _image;
+  final ImagePicker _picker = ImagePicker(); // Initialize the picker
+  File? _image;
+  String _result = '';
 
-  @override
-  void initState() {
-    super.initState();
-    _openGallery();
-  }
+  Future<void> _pickImage() async {
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
 
-  Future<void> _openGallery() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      File file = File(image.path);
 
-    setState(() {
-      _image = picked;
-    });
+      // This package returns true if blurred, false if clear
+      final bool isBlurred = await BlurDetectionService.isImageBlurred(file);
+
+      setState(() {
+        _image = file;
+        _result = isBlurred
+            ? "The image is blurry. Please retake."
+            : "The image is clear.";
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Select from Gallery")),
+      appBar: AppBar(
+        title: const Text('Blur Detector Example'),
+      ),
       body: Center(
-        child: _image == null
-            ? const Text(
-                "No image selected.\nGallery was opened automatically.",
-                textAlign: TextAlign.center,
-              )
-            : Image.file(
-                File(_image!.path),
-                width: 250,
-              ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            if (_image != null) Image.file(_image!, height: 500),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _pickImage,
+              child: const Text('Pick an Image'),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _result,
+              style: const TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
       ),
     );
   }

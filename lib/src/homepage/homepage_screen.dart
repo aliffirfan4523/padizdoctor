@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/camera_gallery/gallery.dart';
+import 'package:padizdoctor/src/screens/auth_service.dart';
 import 'package:sidebarx/sidebarx.dart';
 
 import '../common_widget/sidebar.dart';
@@ -66,6 +67,8 @@ class _HomepageViewState extends State<HomepageView> {
                         onPressed: () {
                           // Add your logout logic here
                           Navigator.of(context).pop();
+                          AuthService.instance.signOut();
+                          Navigator.pushReplacementNamed(context, "/login");
                         },
                         icon: Icon(Icons.logout),
                         label: Text('Logout'),

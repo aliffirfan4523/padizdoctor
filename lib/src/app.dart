@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:padizdoctor/l10n/app_localizations.dart';
+import 'package:padizdoctor/src/screens/signin_screen.dart';
 
 import 'core/app_fonts.dart';
 import 'homepage/homepage_screen.dart';
@@ -70,6 +71,7 @@ class MyApp extends StatelessWidget {
           routes: {
             "/intro": (_) => const IntroPage(),
             "/home": (_) => HomepageView(), // your existing homepage
+            '/login': (_) => SignInScreen(context),
           },
 
           // Define a function to handle named routes in order to support

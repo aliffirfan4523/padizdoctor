@@ -1,9 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/screens/signin_screen.dart';
 import 'package:padizdoctor/src/utils/colors_utils.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
+
+  Future<void> _finishIntro(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("isFirstTime", false);
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SignInScreen(context),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,12 +90,7 @@ class IntroPage extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => SignInScreen(context),
-                          ),
-                        );
+                        _finishIntro(context);
                       },
                       child: const Text(
                         "Get Started",

@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:padizdoctor/src/homepage/homepage_screen.dart';
 import 'package:padizdoctor/src/screens/auth_service.dart';
 import 'package:padizdoctor/src/screens/signup_screen.dart';
@@ -18,16 +17,6 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   TextEditingController _passwordTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
-
-  Future<void> _signInToGoogle(GoogleSignInAccount user) async {
-    final googleAuth = await user.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      idToken: googleAuth.idToken,
-    );
-
-    await FirebaseAuth.instance.signInWithCredential(credential);
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,19 +76,45 @@ class _SignInScreenState extends State<SignInScreen> {
                 signInSignUpButton(
                   context,
                   true,
-                  () {
-                    FirebaseAuth.instance
-                        .signInWithEmailAndPassword(
-                            email: _emailTextController.text,
-                            password: _passwordTextController.text)
-                        .then((value) {
-                      Navigator.push(
+                  () async {
+                    try {
+                      final value = await FirebaseAuth.instance
+                          .signInWithEmailAndPassword(
+                              email: _emailTextController.text,
+                              password: _passwordTextController.text);
+                      if (!mounted) return;
+                      if (value.user != null) {
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => HomepageView()));
-                    }).onError((error, stackTrace) {
-                      print("Error ${error.toString()}");
-                    });
+                            builder: (context) => HomepageView(),
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Login failed. Please try again.')),
+                        );
+                      }
+                    } on FirebaseAuthException catch (error) {
+                      if (!mounted) return;
+                      String message = 'Login failed. Please try again.';
+                      if (error.code == 'invalid-credential') {
+                        message =
+                            'Invalid credentials. Please check your email and password.';
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(message)),
+                      );
+                      debugPrint("FirebaseAuthException: ${error.toString()}");
+                    } catch (error) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                            content: Text('An unexpected error occurred.')),
+                      );
+                      debugPrint("Error: ${error.toString()}");
+                    }
                   },
                   buttonColor: Colors.white,
                   textColor: hexStringToColor("3E8E41"),
@@ -115,7 +130,26 @@ class _SignInScreenState extends State<SignInScreen> {
                 Padding(
                   padding: const EdgeInsets.only(bottom: 40.0),
                   child: ElevatedButton(
-                    onPressed: AuthService.instance.signInWithGoogle,
+                    onPressed: () {
+                      AuthService.instance.signInWithGoogle().then((value) {
+                        if (value?.user != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => HomepageView(),
+                            ),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content:
+                                    Text('Login failed. Please try again.')),
+                          );
+                        }
+                      }).onError((error, stackTrace) {
+                        print("Error ${error.toString()}");
+                      });
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white, // white button
                       foregroundColor: hexStringToColor("3E8E41"), // green text
