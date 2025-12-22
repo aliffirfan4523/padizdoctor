@@ -1,113 +1,104 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/screens/signin_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:padizdoctor/src/utils/colors_utils.dart';
 
 class IntroPage extends StatelessWidget {
   const IntroPage({super.key});
 
-  Future<void> _finishIntro(BuildContext context) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool("isFirstTime", false);
-    Navigator.pushReplacementNamed(context, "/home");
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
+          // Background image
+          Image.asset(
+            "assets/images/intropagever.gif",
+            fit: BoxFit.cover,
+          ),
+
+          // Dark overlay for readability
+          Container(
+            color: Colors.black.withOpacity(0.35),
+          ),
+
+          // Content with semi-transparent box
           Center(
-              child: Text(
-            "Welcome to PadizDoctor",
-            style: TextStyle(fontSize: 25),
-          )),
-          SizedBox(height: 20),
-          Divider(
-            thickness: 1,
-            indent: 40,
-            endIndent: 40,
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Column(
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.symmetric(horizontal: 30),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.4), // semi-transparent box
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
+                  // Logo
+                  Image.asset(
+                    "assets/images/logo2.png", // replace with your logo path
+                    height: 150, // adjust as needed
+                    width: 150,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Headline
+                  Text(
+                    "Welcome to PadizDoctor",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Subtitle / promotional text
+                  Text(
+                    "Quickly identify paddy leaf diseases with our smart detection system, ensuring healthier crops, higher productivity, and more efficient farm management.",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                    softWrap: true,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: hexStringToColor("#388E3C"),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => SignInScreen(context),
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        "Get Started",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
-              Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
-                ),
-              )
-            ],
+            ),
           ),
-          SizedBox(height: 20),
-          Divider(
-            thickness: 1,
-            indent: 40,
-            endIndent: 40,
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
-                ),
-              ),
-              Column(
-                children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
-                ],
-              ),
-            ],
-          ),
-          SizedBox(height: 20),
-          Divider(
-            thickness: 1,
-            indent: 40,
-            endIndent: 40,
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              Column(
-                children: [
-                  Text("fasfagadsaad"),
-                  Text("Test Test Test Test Test Test Test"),
-                ],
-              ),
-              Container(
-                width: 100,
-                color: Colors.amber,
-                child: SizedBox(
-                  height: 100,
-                ),
-              )
-            ],
-          ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => SignInScreen(context)),
-              );
-            },
-            child: const Text("Continue"),
-          )
         ],
       ),
     );

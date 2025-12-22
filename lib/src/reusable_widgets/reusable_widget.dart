@@ -11,7 +11,11 @@ Image logoWidget(String imageName) {
 }
 
 TextField reusableTextField(String text, IconData icon, bool isPasswordType,
-    TextEditingController controller) {
+    TextEditingController controller,
+    {required Color hintColor,
+    required Color iconColor,
+    required Color textColor,
+    required int borderRadius}) {
   return TextField(
     controller: controller,
     obscureText: isPasswordType,
@@ -39,8 +43,10 @@ TextField reusableTextField(String text, IconData icon, bool isPasswordType,
   );
 }
 
-Container signInSignUpButton(
-    BuildContext context, bool isLogin, Function onTap) {
+Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap,
+    {required int borderRadius,
+    required textColor,
+    required Color buttonColor}) {
   return Container(
     width: MediaQuery.of(context).size.width,
     height: 50,
