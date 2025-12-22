@@ -13,7 +13,7 @@ class IntroPage extends StatelessWidget {
         children: [
           // Background image
           Image.asset(
-            "assets/images/intropagever.gif",
+            "assets/images/introgif.gif",
             fit: BoxFit.cover,
           ),
 
