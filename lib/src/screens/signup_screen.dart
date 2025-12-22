@@ -1,7 +1,9 @@
-import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/homepage/homepage_screen.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_widget.dart';
+
 import '../utils/colors_utils.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -92,23 +94,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 signInSignUpButton(
                   context,
                   false,
-                  () {
-                    FirebaseAuth.instance
-                        .createUserWithEmailAndPassword(
-                      email: _emailTextController.text.trim(),
-                      password: _passwordTextController.text.trim(),
-                    )
-                        .then((value) {
-                      print("Created New Account");
+                  () async {
+                    try {
+                      // 1. Create Auth user
+                      UserCredential userCredential = await FirebaseAuth
+                          .instance
+                          .createUserWithEmailAndPassword(
+                        email: _emailTextController.text.trim(),
+                        password: _passwordTextController.text.trim(),
+                      );
+
+                      User user = userCredential.user!;
+
+                      // 2. Firestore reference
+                      final docRef = FirebaseFirestore.instance
+                          .collection('users')
+                          .doc(user.uid);
+
+                      // 3. Check if Firestore document exists
+                      final doc = await docRef.get();
+
+                      if (!doc.exists) {
+                        await docRef.set({
+                          'email': user.email,
+                          'fullName': user.displayName ?? 'No Name',
+                          'isAdmin': false,
+                          'lastActive': DateTime.now(),
+                          'phone': '',
+                          'profilePicture': '',
+                        });
+                      }
+
+                      // 4. Navigate after success
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const HomepageView(),
                         ),
                       );
-                    }).onError((error, stackTrace) {
-                      print("Error: ${error.toString()}");
-                    });
+                    } on FirebaseAuthException catch (e) {
+                      print("Auth Error: ${e.message}");
+                    } catch (e) {
+                      print("Unexpected Error: $e");
+                    }
                   },
                   buttonColor: Colors.white,
                   textColor: hexStringToColor("3E8E41"),
