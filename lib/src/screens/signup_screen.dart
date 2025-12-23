@@ -1,14 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/homepage/homepage_screen.dart';
+import 'package:padizdoctor/src/homepage/main_navigation_view.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_widget.dart';
 
+import '../settings/settings_controller.dart';
 import '../utils/colors_utils.dart';
 
 class SignUpScreen extends StatefulWidget {
-  const SignUpScreen({Key? key}) : super(key: key);
+  const SignUpScreen(BuildContext context,
+      {super.key, required this.controller});
 
+  final SettingsController controller;
   @override
   _SignUpScreenState createState() => _SignUpScreenState();
 }
@@ -129,7 +132,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const HomepageView(),
+                          builder: (context) =>
+                              MainNavigationView(controller: widget.controller),
                         ),
                       );
                     } on FirebaseAuthException catch (e) {

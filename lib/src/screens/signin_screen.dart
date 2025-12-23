@@ -1,15 +1,18 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/homepage/homepage_screen.dart';
+import 'package:padizdoctor/src/homepage/main_navigation_view.dart';
 import 'package:padizdoctor/src/screens/auth_service.dart';
 import 'package:padizdoctor/src/screens/signup_screen.dart';
+import 'package:padizdoctor/src/settings/settings_controller.dart';
 
 import '../reusable_widgets/reusable_widget.dart';
 import '../utils/colors_utils.dart';
 
 class SignInScreen extends StatefulWidget {
-  const SignInScreen(BuildContext context, {Key? key}) : super(key: key);
+  const SignInScreen(BuildContext context,
+      {super.key, required this.controller});
 
+  final SettingsController controller;
   @override
   _SignInScreenState createState() => _SignInScreenState();
 }
@@ -87,7 +90,8 @@ class _SignInScreenState extends State<SignInScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => HomepageView(),
+                            builder: (context) => MainNavigationView(
+                                controller: widget.controller),
                           ),
                         );
                       } else {
@@ -136,7 +140,8 @@ class _SignInScreenState extends State<SignInScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => HomepageView(),
+                              builder: (context) => MainNavigationView(
+                                  controller: widget.controller),
                             ),
                           );
                         } else {
@@ -180,8 +185,11 @@ class _SignInScreenState extends State<SignInScreen> {
             style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
-            Navigator.push(context,
-                MaterialPageRoute(builder: (context) => SignUpScreen()));
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) =>
+                        SignUpScreen(context, controller: widget.controller)));
           },
           child: const Text(
             " Sign Up",

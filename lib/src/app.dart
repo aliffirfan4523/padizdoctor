@@ -4,7 +4,7 @@ import 'package:padizdoctor/l10n/app_localizations.dart';
 import 'package:padizdoctor/src/screens/signin_screen.dart';
 
 import 'core/app_fonts.dart';
-import 'homepage/homepage_screen.dart';
+import 'homepage/main_navigation_view.dart';
 import 'intro/intro_page.dart';
 import 'intro/splash_decider.dart';
 import 'sample_feature/sample_item_details_view.dart';
@@ -62,16 +62,20 @@ class MyApp extends StatelessWidget {
           // preferred ThemeMode (light, dark, or system default) from the
           // SettingsController to display the correct theme.
           theme: ThemeData(
-            fontFamily: AppFonts.poppins,
+            fontFamilyFallback: [AppFonts.displayFont, AppFonts.bodyFont],
           ),
           darkTheme: ThemeData.dark(),
           themeMode: settingsController.themeMode,
           home: const SplashDecider(),
 
           routes: {
-            "/intro": (_) => const IntroPage(),
-            "/home": (_) => HomepageView(), // your existing homepage
-            '/login': (_) => SignInScreen(context),
+            "/intro": (_) => IntroPage(controller: settingsController),
+            "/home": (_) => MainNavigationView(
+                controller: settingsController), // your existing homepage
+            '/login': (_) => SignInScreen(
+                  context,
+                  controller: settingsController,
+                ),
           },
 
           // Define a function to handle named routes in order to support
@@ -87,7 +91,7 @@ class MyApp extends StatelessWidget {
                     return const SampleItemDetailsView();
                   case SampleItemListView.routeName:
                   default:
-                    return HomepageView();
+                    return MainNavigationView(controller: settingsController);
                 }
               },
             );

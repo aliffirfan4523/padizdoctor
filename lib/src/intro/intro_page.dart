@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/screens/signin_screen.dart';
+import 'package:padizdoctor/src/settings/settings_controller.dart';
 import 'package:padizdoctor/src/utils/colors_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IntroPage extends StatelessWidget {
-  const IntroPage({super.key});
+  const IntroPage({super.key, required this.controller});
+
+  final SettingsController controller;
 
   Future<void> _finishIntro(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
@@ -12,7 +15,7 @@ class IntroPage extends StatelessWidget {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
-        builder: (context) => SignInScreen(context),
+        builder: (context) => SignInScreen(context, controller: controller),
       ),
     );
   }
