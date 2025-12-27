@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:padizdoctor/l10n/app_localizations.dart';
-import 'package:padizdoctor/src/screens/signin_screen.dart';
+import 'package:padizdoctor/src/auth/signin_screen.dart';
 
+import 'app/app_navigation_view.dart';
 import 'core/app_fonts.dart';
-import 'homepage/main_navigation_view.dart';
 import 'intro/intro_page.dart';
 import 'intro/splash_decider.dart';
-import 'sample_feature/sample_item_details_view.dart';
-import 'sample_feature/sample_item_list_view.dart';
 import 'settings/settings_controller.dart';
 import 'settings/settings_view.dart';
 
@@ -87,9 +85,6 @@ class MyApp extends StatelessWidget {
                 switch (routeSettings.name) {
                   case SettingsView.routeName:
                     return SettingsView(controller: settingsController);
-                  case SampleItemDetailsView.routeName:
-                    return const SampleItemDetailsView();
-                  case SampleItemListView.routeName:
                   default:
                     return MainNavigationView(controller: settingsController);
                 }

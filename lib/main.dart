@@ -1,6 +1,8 @@
+import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/screens/auth_service.dart';
+import 'package:get_it/get_it.dart';
+import 'package:padizdoctor/src/auth/auth_service.dart';
 
 import 'firebase_options.dart';
 import 'src/app.dart';
@@ -27,5 +29,11 @@ void main() async {
 
   await AuthService.instance.initializeGoogleSignIn();
 
-  runApp(MyApp(settingsController: settingsController));
+  // Initialize the camera
+  final cameras = await availableCameras();
+  GetIt.instance.registerSingleton<List<CameraDescription>>(cameras);
+
+  runApp(
+    MyApp(settingsController: settingsController),
+  );
 }

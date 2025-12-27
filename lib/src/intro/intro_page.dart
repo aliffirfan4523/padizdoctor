@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/screens/signin_screen.dart';
+import 'package:padizdoctor/src/auth/signin_screen.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 import 'package:padizdoctor/src/utils/colors_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';

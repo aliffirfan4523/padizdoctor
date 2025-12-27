@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/homepage/main_navigation_view.dart';
+import 'package:padizdoctor/src/app/app_navigation_view.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_widget.dart';
+import 'package:padizdoctor/src/user/user_profile/user_service.dart';
 
 import '../settings/settings_controller.dart';
 import '../utils/colors_utils.dart';
@@ -20,7 +21,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordTextController = TextEditingController();
   final TextEditingController _emailTextController = TextEditingController();
   final TextEditingController _userNameTextController = TextEditingController();
-
+  final userService = UserService();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,14 +119,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       final doc = await docRef.get();
 
                       if (!doc.exists) {
-                        await docRef.set({
-                          'email': user.email,
-                          'fullName': _userNameTextController.text.trim() ?? '',
-                          'isAdmin': false,
-                          'lastActive': DateTime.now(),
-                          'phone': '',
-                          'profilePicture': '',
-                        });
+                        await userService.createUser(
+                          firebaseUser: user,
+                          fullName: _userNameTextController.text.trim() ?? '',
+                          profilePicture: user.photoURL ?? '',
+                        );
                       }
 
                       // 4. Navigate after success

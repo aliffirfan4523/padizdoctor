@@ -4,12 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:padizdoctor/src/user/user_profile/user_service.dart';
 
 class AuthService {
   AuthService._();
 
   static final AuthService instance = AuthService._();
-
+  final userService = UserService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   StreamSubscription? _googleAuthSub;
@@ -69,15 +70,11 @@ class AuthService {
         final doc = await docRef.get();
 
         if (!doc.exists) {
-          await docRef.set({
-            'email': user.email,
-            // Use Google's name if the controller isn't available
-            'fullName': user.displayName ?? '',
-            'isAdmin': false,
-            'lastActive': DateTime.now(),
-            'phone': user.phoneNumber ?? '',
-            'profilePicture': user.photoURL ?? '',
-          });
+          await userService.createUser(
+            firebaseUser: user,
+            fullName: user.displayName ?? '',
+            profilePicture: user.photoURL ?? '',
+          );
         } else {
           // Optional: Update lastActive even if user exists
           await docRef.update({'lastActive': DateTime.now()});

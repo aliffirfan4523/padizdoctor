@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/homepage/main_navigation_view.dart';
-import 'package:padizdoctor/src/screens/auth_service.dart';
-import 'package:padizdoctor/src/screens/signup_screen.dart';
+import 'package:padizdoctor/src/app/app_navigation_view.dart';
+import 'package:padizdoctor/src/auth/auth_service.dart';
+import 'package:padizdoctor/src/auth/signup_screen.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 
 import '../reusable_widgets/reusable_widget.dart';

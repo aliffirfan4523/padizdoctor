@@ -1,13 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/auth/auth_service.dart';
 import 'package:padizdoctor/src/camera_gallery/gallery.dart';
 import 'package:padizdoctor/src/homepage/homepage_service.dart';
-import 'package:padizdoctor/src/screens/auth_service.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 
 class HomepageScreens extends StatefulWidget {
-  HomepageScreens({super.key, required this.controller});
+  HomepageScreens({super.key, required this.controller, required this.user});
   final SettingsController controller;
+  var user = {};
   @override
   State<HomepageScreens> createState() => _HomepageScreensState();
 }
@@ -15,21 +16,6 @@ class HomepageScreens extends StatefulWidget {
 class _HomepageScreensState extends State<HomepageScreens> {
   final service = HomepageService();
   var selectedIndex = 0;
-  var user = {};
-  @override
-  @override
-  void initState() {
-    super.initState();
-
-    service.loadData().then((data) {
-      // The 'mounted' check must be inside the .then block
-      if (mounted) {
-        setState(() {
-          user = data ?? {};
-        });
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +33,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(40.0),
                       child: CachedNetworkImage(
-                        imageUrl: user["profilePictureUrl"] ??
+                        imageUrl: widget.user["profilePicture"] ??
                             "https://static.vecteezy.com/system/resources/previews/043/338/613/non_2x/round-anonymous-person-icon-vector.jpg",
                         placeholder: (context, url) =>
                             Icon(Icons.person_4_rounded),
@@ -65,7 +51,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
               textAlign: TextAlign.left,
             ),
             Text(
-              'Farmer ${user["fullName"].toString()}',
+              'Farmer ${widget.user["fullName"].toString()}',
               style: TextStyle(fontSize: 16),
               textAlign: TextAlign.left,
             ),
@@ -280,13 +266,14 @@ class _HomepageScreensState extends State<HomepageScreens> {
               CircleAvatar(
                 radius: 40,
                 backgroundImage: CachedNetworkImageProvider(
-                  user["profilePictureUrl"] ??
+                  widget.user["profilePictureUrl"] ??
                       "https://static.vecteezy.com/system/resources/previews/043/338/613/non_2x/round-anonymous-person-icon-vector.jpg",
                 ), // Replace with your asset or NetworkImage
               ),
               SizedBox(width: 30),
               Text(
-                user["fullName"] ?? 'User', // Replace with actual user name
+                widget.user["fullName"] ??
+                    'User', // Replace with actual user name
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
             ],
