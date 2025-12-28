@@ -28,8 +28,8 @@ class _MainNavigationViewState extends State<MainNavigationView> {
   @override
   void initState() {
     super.initState();
-
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    final uid = user!.uid;
 
     _userSub = FirebaseFirestore.instance
         .collection('users')

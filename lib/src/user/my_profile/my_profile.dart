@@ -1,7 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/auth/auth_service.dart';
+import 'package:padizdoctor/src/auth/change_password_page.dart';
 import 'package:padizdoctor/src/common_widget/theme_toggle_button.dart';
+import 'package:padizdoctor/src/reusable_widgets/text_button.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 import 'package:padizdoctor/src/user/user_profile/user_service.dart';
 
@@ -118,7 +121,14 @@ class _MyProfileState extends State<MyProfile> {
           ListTile(
             title: Text("Change Password"),
             trailing: Icon(Icons.arrow_forward_ios),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ChangePasswordPage(),
+                ),
+              );
+            },
           ),
           SizedBox(height: 20),
           Text("App Settings",
@@ -133,7 +143,6 @@ class _MyProfileState extends State<MyProfile> {
                   .map((option) => widget.controller.themeMode == option.theme)
                   .toList(),
               onPressed: (index) {
-                print(options[index].theme);
                 widget.controller.updateThemeMode(options[index].theme);
               },
               children: options.map((option) => option.widget).toList(),
@@ -153,24 +162,13 @@ class _MyProfileState extends State<MyProfile> {
             }
           }),
           SizedBox(height: 10),
-          TextColorButton(Colors.red, "Log Out", () {}),
+          TextColorButton(Colors.red, "Log Out", () {
+            Navigator.of(context).pop();
+            AuthService.instance.signOut();
+            Navigator.pushReplacementNamed(context, "/login");
+          }),
         ],
       ),
     ));
-  }
-
-  InkWell TextColorButton(Color color, String text, Function()? onTap) {
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-          alignment: Alignment.center,
-          width: double.infinity,
-          height: 50,
-          decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.all(Radius.circular(25))),
-          child: Text(text,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
-    );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/app/app_navigation_view.dart';
 import 'package:padizdoctor/src/auth/auth_service.dart';
 import 'package:padizdoctor/src/auth/signup_screen.dart';
+import 'package:padizdoctor/src/reusable_widgets/reusable_text_field.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 
 import '../reusable_widgets/reusable_widget.dart';
@@ -20,7 +21,7 @@ class SignInScreen extends StatefulWidget {
 class _SignInScreenState extends State<SignInScreen> {
   TextEditingController _passwordTextController = TextEditingController();
   TextEditingController _emailTextController = TextEditingController();
-
+  bool passwordVisible = false;
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -50,16 +51,11 @@ class _SignInScreenState extends State<SignInScreen> {
                 const SizedBox(height: 30),
 
                 // Username TextField
-                reusableTextField(
-                  "Enter Email",
-                  Icons.person_outline,
-                  false,
-                  _emailTextController,
-                  textColor: Colors.white,
-                  iconColor: Colors.white70,
-                  hintColor: Colors.white70,
-                  borderRadius: 16,
-                ),
+                reusableTextField("Enter Email", Icons.person_outline, false,
+                    _emailTextController,
+                    borderRadius: 16,
+                    passwordVisible: false,
+                    onTogglePassword: () {}),
                 const SizedBox(height: 20),
 
                 // Password TextField
@@ -68,10 +64,13 @@ class _SignInScreenState extends State<SignInScreen> {
                   Icons.lock_outline,
                   true,
                   _passwordTextController,
-                  textColor: Colors.white,
-                  iconColor: Colors.white70,
-                  hintColor: Colors.white70,
                   borderRadius: 16,
+                  passwordVisible: passwordVisible,
+                  onTogglePassword: () {
+                    setState(() {
+                      passwordVisible = !passwordVisible;
+                    });
+                  },
                 ),
                 const SizedBox(height: 20),
 

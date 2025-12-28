@@ -50,4 +50,22 @@ class UserService {
       });
     }
   }
+
+  Future<String> updatePassword(String oldPassword, String newPassword) async {
+    final user = FirebaseAuth.instance.currentUser;
+    final AuthCredential credential = EmailAuthProvider.credential(
+      email: user!.email!,
+      password: oldPassword, // User's current password
+    );
+
+    try {
+      await user.reauthenticateWithCredential(credential);
+      // Re-authentication successful, now update the password
+      await user.updatePassword(newPassword);
+      return ("Password updated successfully!");
+    } on FirebaseAuthException catch (e) {
+      // Handle specific errors like 'wrong-password' or 'requires-recent-login'
+      return ("Error: ${e.message}");
+    }
+  }
 }

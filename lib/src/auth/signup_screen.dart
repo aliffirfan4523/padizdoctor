@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/app/app_navigation_view.dart';
+import 'package:padizdoctor/src/reusable_widgets/reusable_text_field.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_widget.dart';
 import 'package:padizdoctor/src/user/user_profile/user_service.dart';
 
@@ -22,6 +23,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailTextController = TextEditingController();
   final TextEditingController _userNameTextController = TextEditingController();
   final userService = UserService();
+
+  bool passwordVisible = false;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -56,29 +60,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 const SizedBox(height: 20),
 
                 // Username
-                reusableTextField(
-                  "Enter Name",
-                  Icons.person_outline,
-                  false,
-                  _userNameTextController,
-                  textColor: Colors.white,
-                  iconColor: Colors.white70,
-                  hintColor: Colors.white70,
-                  borderRadius: 16,
-                ),
+                reusableTextField("Enter Name", Icons.person_outline, false,
+                    _userNameTextController,
+                    borderRadius: 16,
+                    passwordVisible: false,
+                    onTogglePassword: () {}),
                 const SizedBox(height: 20),
 
                 // Email
-                reusableTextField(
-                  "Enter Email",
-                  Icons.email_outlined,
-                  false,
-                  _emailTextController,
-                  textColor: Colors.white,
-                  iconColor: Colors.white70,
-                  hintColor: Colors.white70,
-                  borderRadius: 16,
-                ),
+                reusableTextField("Enter Email", Icons.email_outlined, false,
+                    _emailTextController,
+                    borderRadius: 16,
+                    passwordVisible: false,
+                    onTogglePassword: () {}),
                 const SizedBox(height: 20),
 
                 // Password
@@ -87,10 +81,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   Icons.lock_outline,
                   true,
                   _passwordTextController,
-                  textColor: Colors.white,
-                  iconColor: Colors.white70,
-                  hintColor: Colors.white70,
                   borderRadius: 16,
+                  passwordVisible: passwordVisible,
+                  onTogglePassword: () {
+                    setState(() {
+                      passwordVisible = !passwordVisible;
+                    });
+                  },
                 ),
                 const SizedBox(height: 30),
 

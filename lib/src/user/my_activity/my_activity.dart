@@ -36,74 +36,79 @@ class _MyActivityState extends State<MyActivity> {
           ),
           SizedBox(height: 20),
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-              decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: Colors.grey))),
-              child: Column(
-                spacing: 10,
-                children: [
-                  Text(
-                    'Recent Scans',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            padding: const EdgeInsets.all(20.0),
+            child: _diseaseDistribution(),
+          )
+        ],
+      ),
+    );
+  }
+
+  Container _diseaseDistribution() {
+    return Container(
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade300, width: 5),
+          borderRadius: BorderRadius.circular(40)),
+      child: Column(
+        spacing: 10,
+        children: [
+          SizedBox(height: 10),
+          Text(
+            'Recent Scans',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          Divider(),
+          AspectRatio(
+            aspectRatio: 1.4,
+            child: AspectRatio(
+              aspectRatio: 1.4,
+              child: PieChart(
+                PieChartData(
+                  sections: showingSections(),
+                  pieTouchData: PieTouchData(
+                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                      setState(() {
+                        if (!event.isInterestedForInteractions ||
+                            pieTouchResponse == null ||
+                            pieTouchResponse.touchedSection == null) {
+                          touchedIndex = -1;
+                          return;
+                        }
+                        touchedIndex = pieTouchResponse
+                            .touchedSection!.touchedSectionIndex;
+                      });
+                    },
                   ),
-                  Divider(),
-                  AspectRatio(
-                    aspectRatio: 1.3,
-                    child: AspectRatio(
-                      aspectRatio: 1,
-                      child: PieChart(
-                        PieChartData(
-                          sections: showingSections(),
-                          pieTouchData: PieTouchData(
-                            touchCallback:
-                                (FlTouchEvent event, pieTouchResponse) {
-                              setState(() {
-                                if (!event.isInterestedForInteractions ||
-                                    pieTouchResponse == null ||
-                                    pieTouchResponse.touchedSection == null) {
-                                  touchedIndex = -1;
-                                  return;
-                                }
-                                touchedIndex = pieTouchResponse
-                                    .touchedSection!.touchedSectionIndex;
-                              });
-                            },
-                          ),
-                          borderData: FlBorderData(
-                            show: false,
-                          ),
-                          sectionsSpace: 0,
-                          centerSpaceRadius: 40,
-                        ),
-                      ),
-                    ),
+                  borderData: FlBorderData(
+                    show: false,
                   ),
-                  DataTable(columns: <DataColumn>[
-                    DataColumn(label: Text('Type')),
-                    DataColumn(label: Text('Accuracy')),
-                    DataColumn(label: Text('Date')),
-                  ], rows: <DataRow>[
-                    DataRow(cells: <DataCell>[
-                      DataCell(Text('Tomato Blight')),
-                      DataCell(Text('96%')),
-                      DataCell(Text('3 hours ago')),
-                    ]),
-                    DataRow(cells: <DataCell>[
-                      DataCell(Text('Potato Disease')),
-                      DataCell(Text('89%')),
-                      DataCell(Text('1 day ago')),
-                    ]),
-                    DataRow(cells: <DataCell>[
-                      DataCell(Text('Corn Leaf Spot')),
-                      DataCell(Text('92%')),
-                      DataCell(Text('2 days ago')),
-                    ]),
-                  ]),
-                ],
+                  sectionsSpace: 0,
+                  centerSpaceRadius: 60,
+                ),
               ),
             ),
-          )
+          ),
+          DataTable(columns: <DataColumn>[
+            DataColumn(label: Text('Type')),
+            DataColumn(label: Text('Accuracy')),
+            DataColumn(label: Text('Date')),
+          ], rows: <DataRow>[
+            DataRow(cells: <DataCell>[
+              DataCell(Text('Tomato Blight')),
+              DataCell(Text('96%')),
+              DataCell(Text('3 hours ago')),
+            ]),
+            DataRow(cells: <DataCell>[
+              DataCell(Text('Potato Disease')),
+              DataCell(Text('89%')),
+              DataCell(Text('1 day ago')),
+            ]),
+            DataRow(cells: <DataCell>[
+              DataCell(Text('Corn Leaf Spot')),
+              DataCell(Text('92%')),
+              DataCell(Text('2 days ago')),
+            ]),
+          ]),
         ],
       ),
     );
