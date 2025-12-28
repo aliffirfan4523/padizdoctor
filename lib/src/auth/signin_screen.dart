@@ -136,12 +136,9 @@ class _SignInScreenState extends State<SignInScreen> {
                     onPressed: () {
                       AuthService.instance.signInWithGoogle().then((value) {
                         if (value?.user != null) {
-                          Navigator.push(
+                          Navigator.pushReplacementNamed(
                             context,
-                            MaterialPageRoute(
-                              builder: (context) => MainNavigationView(
-                                  controller: widget.controller),
-                            ),
+                            "/home",
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(

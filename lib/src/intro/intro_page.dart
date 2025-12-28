@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/auth/signin_screen.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
 import 'package:padizdoctor/src/utils/colors_utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,11 +11,9 @@ class IntroPage extends StatelessWidget {
   Future<void> _finishIntro(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool("isFirstTime", false);
-    Navigator.pushReplacement(
+    Navigator.pushReplacementNamed(
       context,
-      MaterialPageRoute(
-        builder: (context) => SignInScreen(context, controller: controller),
-      ),
+      "/login",
     );
   }
 

@@ -21,20 +21,6 @@ class AuthService {
       clientId:
           '533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com',
     );
-
-    _googleAuthSub = GoogleSignIn.instance.authenticationEvents.listen(
-      (event) async {
-        switch (event) {
-          case GoogleSignInAuthenticationEventSignIn():
-            await _signInToFirebase(event.user);
-            break;
-
-          case GoogleSignInAuthenticationEventSignOut():
-            await FirebaseAuth.instance.signOut();
-            break;
-        }
-      },
-    );
   }
 
   /// Trigger Google UI

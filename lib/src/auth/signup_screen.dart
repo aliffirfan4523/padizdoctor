@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/app/app_navigation_view.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_text_field.dart';
 import 'package:padizdoctor/src/reusable_widgets/reusable_widget.dart';
 import 'package:padizdoctor/src/user/user_profile/user_service.dart';
@@ -119,17 +118,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         await userService.createUser(
                           firebaseUser: user,
                           fullName: _userNameTextController.text.trim() ?? '',
-                          profilePicture: user.photoURL ?? '',
+                          profilePicture: user.photoURL ??
+                              'https://res.cloudinary.com/dijcgzy3v/image/upload/v1766859823/cld-sample-2.jpg',
                         );
                       }
 
                       // 4. Navigate after success
-                      Navigator.pushReplacement(
+                      Navigator.pushReplacementNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              MainNavigationView(controller: widget.controller),
-                        ),
+                        "/home",
                       );
                     } on FirebaseAuthException catch (e) {
                       print("Auth Error: ${e.message}");
