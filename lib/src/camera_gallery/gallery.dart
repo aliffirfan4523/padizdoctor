@@ -2,9 +2,12 @@ import 'dart:io';
 
 import 'package:blur_detection/blur_detection.dart';
 import 'package:camera/camera.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
+
+import 'gallery_service.dart';
 
 class GalleryPicker extends StatefulWidget {
   const GalleryPicker({super.key});
@@ -21,13 +24,13 @@ class _GalleryPickerState extends State<GalleryPicker> {
   late Future<void> _initializeControllerFuture;
   // camera_view.dart
   final cameras = GetIt.instance<List<CameraDescription>>();
+  final int maxSizeInBytes = 8 * 1024 * 1024; // 5 MB limit
 
   @override
   void initState() {
     super.initState();
     controller = CameraController(cameras[0], ResolutionPreset.max);
-    _initializeControllerFuture = controller.initialize();
-    controller.initialize().then((_) {
+    _initializeControllerFuture = controller.initialize().then((_) {
       if (!mounted) {
         return;
       }
@@ -72,7 +75,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
   @override
   Widget build(BuildContext context) {
-    if (controller == null || !controller.value.isInitialized) {
+    if (!controller.value.isInitialized) {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(child: CircularProgressIndicator()),
@@ -80,9 +83,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
     }
     return SafeArea(
       child: Scaffold(
-          appBar: AppBar(
-            title: const Text('Blur Detector Example'),
-          ),
+          appBar: AppBar(),
           body: Stack(
             children: [
               // Layer 1: The Camera Feed
@@ -154,38 +155,61 @@ class _GalleryPickerState extends State<GalleryPicker> {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 40, horizontal: 30),
       decoration: BoxDecoration(
-        color: Color(0xFF0B140E), // Very dark green/black
+        // Very dark green/black
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text("STATUS: ACTIVE",
-              style: TextStyle(color: Colors.grey, fontSize: 12)),
+              style: TextStyle(color: Colors.white, fontSize: 12)),
           SizedBox(height: 8),
           Text("Hold steady for accurate analysis",
-              style: TextStyle(color: Colors.white70)),
+              style: TextStyle(color: Colors.white)),
           SizedBox(height: 30),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Gallery Preview Icon
-              Container(
-                height: 50,
-                width: 50,
-                decoration: BoxDecoration(
-                  color: Colors.white10,
-                  borderRadius: BorderRadius.circular(10),
+              InkWell(
+                onTap: () async {
+                  // Handle gallery preview tap
+                  PlatformFile result = await pickPaddyImage();
+
+                  double fileSizeInKB = result.size / 1024;
+                  double fileSizeInMB = fileSizeInKB / 1024;
+                  print("Picked file: ${fileSizeInMB} bytes");
+                  if (fileSizeInMB > 8) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content:
+                            Text("The file is too large. Max Size is 8MB")));
+                  }
+                  if (result.extension == 'jpg' ||
+                      result.extension == 'png' ||
+                      result.extension == 'webp') {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("This is valid image format")));
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        content: Text("Please select an image format")));
+                  }
+                },
+                child: Container(
+                  height: 50,
+                  width: 50,
+                  decoration: BoxDecoration(
+                    color: Colors.white10,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.image, color: Colors.white),
                 ),
-                child: Icon(Icons.image, color: Colors.white),
               ),
               // The Big Green Shutter Button
               _buildShutterButton(),
-              // Flip Camera Icon
-              IconButton(
-                icon:
-                    Icon(Icons.flip_camera_ios, color: Colors.white, size: 30),
-                onPressed: () {},
+              // empty container to balance the layout
+              Container(
+                height: 50,
+                width: 50,
               ),
             ],
           ),
@@ -246,6 +270,16 @@ class ScannerFramePainter extends CustomPainter {
     canvas.drawLine(Offset(size.width, 0), Offset(size.width, len), paint);
 
     // ... Repeat for Bottom Left and Bottom Right
+    // Bottom Left
+    canvas.drawLine(Offset(0, size.height), Offset(len, size.height), paint);
+    canvas.drawLine(
+        Offset(0, size.height), Offset(0, size.height - len), paint);
+
+    // Bottom Right
+    canvas.drawLine(Offset(size.width, size.height),
+        Offset(size.width - len, size.height), paint);
+    canvas.drawLine(Offset(size.width, size.height),
+        Offset(size.width, size.height - len), paint);
   }
 
   @override

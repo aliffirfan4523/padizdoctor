@@ -129,7 +129,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
                 ),
               ],
             ),
-            SizedBox(height: 30),
+            SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

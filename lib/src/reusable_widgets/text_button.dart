@@ -6,10 +6,10 @@ InkWell TextColorButton(Color color, String text, Function()? onTap) {
     child: Container(
         alignment: Alignment.center,
         width: double.infinity,
-        height: 50,
+        height: 40,
         decoration: BoxDecoration(
             color: color, borderRadius: BorderRadius.all(Radius.circular(25))),
         child: Text(text,
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))),
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold))),
   );
 }
