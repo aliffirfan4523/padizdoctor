@@ -1,22 +1,274 @@
-import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/reusable_widgets/text_button.dart';
+import 'dart:io';
 
-class ImagePreview extends StatefulWidget {
-  const ImagePreview({super.key});
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/camera_gallery/image_preview_service.dart';
+
+class ReviewCapturePage extends StatefulWidget {
+  PlatformFile originalImage;
+  PlatformFile editedImage;
+
+  ReviewCapturePage({
+    super.key,
+    required this.originalImage,
+    required this.editedImage,
+  });
 
   @override
-  State<ImagePreview> createState() => _ImagePreviewState();
+  State<ReviewCapturePage> createState() => _ReviewCapturePageState();
 }
 
-class _ImagePreviewState extends State<ImagePreview> {
+class _ReviewCapturePageState extends State<ReviewCapturePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text("Review Capture"),
-          actions: [TextButton(onPressed: () {}, child: Text("Retake"))],
+      //backgroundColor: const Color(0xFF0C1F14),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(context),
+            Expanded(child: _buildImagePreview()),
+            _buildTools(),
+            _buildRunButton(),
+          ],
         ),
-        bottomNavigationBar: TextColorButton(Colors.green, "Use Photo", () {}),
-        body: Center());
+      ),
+    );
+  }
+
+// Crop button
+  Future<void> onCrop(BuildContext context) async {
+    final result = await ImageEditService.cropImage(
+      platformFile: widget.editedImage!,
+      context: context,
+    );
+
+    if (result != null) {
+      setState(() => widget.editedImage = result);
+    }
+  }
+
+  void resetImageEdit() {
+    if (widget.originalImage == null) return;
+
+    setState(() {
+      widget.editedImage = widget.originalImage;
+    });
+  }
+
+  // ---------------- HEADER ----------------
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          IconButton(
+            icon: const Icon(
+              Icons.arrow_back,
+            ),
+            onPressed: () => Navigator.pop(context),
+          ),
+          const Text(
+            "Review Capture",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              // TODO: Retake logic
+              Navigator.pop(context);
+            },
+            child: const Text(
+              "Retake",
+              style: TextStyle(
+                color: Colors.green,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  // ---------------- IMAGE PREVIEW ----------------
+  Widget _buildImagePreview() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          _statusBadge(),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: const Color(0xFF00FF66),
+                  width: 3,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(13),
+                child: InteractiveViewer(
+                  minScale: 0.2,
+                  maxScale: 4,
+                  child: Image.file(
+                    File(widget.editedImage.path!),
+                    fit: BoxFit.fitWidth,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _focusVerified(),
+        ],
+      ),
+    );
+  }
+
+  Widget _statusBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0E3A22),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF00FF66)),
+      ),
+      child: const Text(
+        "✓ AI READY",
+        style: TextStyle(
+          color: Color(0xFF00FF66),
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
+      ),
+    );
+  }
+
+  Widget _focusVerified() {
+    return Column(
+      children: const [
+        Icon(Icons.check_circle, color: Color(0xFF00FF66), size: 28),
+        SizedBox(height: 6),
+        Text(
+          "Focus Verified",
+          style: TextStyle(
+            color: Color(0xFF00FF66),
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          "Image is clear and ready for disease analysis",
+          style: TextStyle(
+            fontSize: 12,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+
+  // ---------------- TOOLS ----------------
+  Widget _buildTools() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF102A1B),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _ToolItem(
+              icon: Icons.edit,
+              label: "Edit",
+              onTap: () => onCrop(context),
+            ),
+            _ToolItem(
+              icon: Icons.refresh,
+              label: "Reset",
+              onTap: () => resetImageEdit(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------- RUN BUTTON ----------------
+  Widget _buildRunButton() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+      child: SizedBox(
+        width: double.infinity,
+        height: 54,
+        child: ElevatedButton.icon(
+          onPressed: () {
+            // TODO: Run diagnosis
+          },
+          icon: const Icon(Icons.biotech),
+          label: const Text(
+            "Run Diagnosis",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF00FF66),
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------- TOOL ITEM ----------------
+class _ToolItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Function? onTap;
+
+  const _ToolItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      icon: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 22),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+      onPressed: () {
+        if (onTap != null) {
+          onTap!();
+        }
+      },
+      tooltip: label,
+    );
   }
 }

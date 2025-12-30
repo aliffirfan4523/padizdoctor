@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:padizdoctor/src/camera_gallery/image_preview.dart';
 
 import 'gallery_service.dart';
 
@@ -189,6 +190,13 @@ class _GalleryPickerState extends State<GalleryPicker> {
                       result.extension == 'webp') {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("This is valid image format")));
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: ((context) {
+                      return ReviewCapturePage(
+                        originalImage: result,
+                        editedImage: result,
+                      );
+                    })));
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content: Text("Please select an image format")));
