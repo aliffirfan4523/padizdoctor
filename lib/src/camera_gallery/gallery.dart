@@ -1,12 +1,11 @@
 import 'dart:io';
 
-import 'package:blur_detection/blur_detection.dart';
 import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:padizdoctor/src/camera_gallery/image_preview.dart';
+import 'package:padizdoctor/src/camera_gallery/upload_loading.dart';
 
 import 'gallery_service.dart';
 
@@ -18,7 +17,6 @@ class GalleryPicker extends StatefulWidget {
 }
 
 class _GalleryPickerState extends State<GalleryPicker> {
-  final ImagePicker _picker = ImagePicker(); // Initialize the picker
   File? _image;
   String _result = '';
   late CameraController controller;
@@ -54,24 +52,6 @@ class _GalleryPickerState extends State<GalleryPicker> {
   void dispose() {
     controller.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
-      File file = File(image.path);
-
-      // This package returns true if blurred, false if clear
-      final bool isBlurred = await BlurDetectionService.isImageBlurred(file);
-
-      setState(() {
-        _image = file;
-        _result = isBlurred
-            ? "The image is blurry. Please retake."
-            : "The image is clear.";
-      });
-    }
   }
 
   @override
@@ -177,29 +157,22 @@ class _GalleryPickerState extends State<GalleryPicker> {
                   // Handle gallery preview tap
                   PlatformFile result = await pickPaddyImage();
 
-                  double fileSizeInKB = result.size / 1024;
-                  double fileSizeInMB = fileSizeInKB / 1024;
-                  print("Picked file: ${fileSizeInMB} bytes");
+                  if (result.path == null) {
+                    return;
+                  }
+                  double fileSizeInMB = result.size / 1024 / 1024;
                   if (fileSizeInMB > 8) {
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                         content:
                             Text("The file is too large. Max Size is 8MB")));
                   }
-                  if (result.extension == 'jpg' ||
-                      result.extension == 'png' ||
-                      result.extension == 'webp') {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("This is valid image format")));
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: ((context) {
-                      return ReviewCapturePage(
-                        originalImage: result,
-                        editedImage: result,
-                      );
-                    })));
+                  if (['jpg', 'png', 'webp'].contains(result.extension)) {
+                    await _runImageQualityCheck(result);
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text("Please select an image format")));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Please select an image format")),
+                    );
                   }
                 },
                 child: Container(
@@ -233,9 +206,13 @@ class _GalleryPickerState extends State<GalleryPicker> {
           await _initializeControllerFuture;
           final image = await controller.takePicture();
           if (!mounted) return;
-          setState(() {
-            _image = File(image.path);
-          });
+          final file = File(image.path);
+          final result = PlatformFile(
+            name: file.path.split('/').last,
+            path: file.path,
+            size: file.lengthSync(),
+          );
+          await _runImageQualityCheck(result);
         } catch (e) {
           print(e);
         }
@@ -256,6 +233,50 @@ class _GalleryPickerState extends State<GalleryPicker> {
         ),
       ),
     );
+  }
+
+  Future<void> _runImageQualityCheck(PlatformFile result) async {
+    // 1. Show loading screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ImageQualityLoading(
+          progress: 0.45,
+          percent: 45,
+          image: FileImage(File(result.path!)),
+          onCancel: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
+
+    try {
+      // 2. Call API
+      final blurResult = await checkImageBlur(result);
+
+      // 3. Remove loading screen
+      Navigator.pop(context);
+
+      // 4. Go to review page
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ReviewCapturePage(
+            originalImage: result,
+            editedImage: result,
+            status: !(blurResult['is_blurry'] as bool),
+            blurScore: blurResult['blur_score'],
+          ),
+        ),
+      );
+    } catch (e) {
+      Navigator.pop(context); // Ensure loading is dismissed
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to check image quality")),
+      );
+    }
   }
 }
 

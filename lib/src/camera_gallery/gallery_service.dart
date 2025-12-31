@@ -1,25 +1,42 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 
-import '../utils/temp.dart';
-
-Future<Map<String, dynamic>> checkImageBlur(File imageFile) async {
-  // Placeholder implementation
-  final uri = Uri.parse('https://${IP_ADDRESS}:8000/check-blur');
+//https://padizdoctor-backend-production.up.railway.app/check-blur/
+Future<Map<String, dynamic>> checkImageBlur(PlatformFile imageFile) async {
+  final uri = Uri.parse(
+    'http://192.168.0.34:8000/check-blur/',
+  );
 
   final request = http.MultipartRequest('POST', uri);
-  request.files.add(await http.MultipartFile.fromPath('file', imageFile.path));
+
+  if (imageFile.path != null) {
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path!,
+      ),
+    );
+  } else if (imageFile.bytes != null) {
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        imageFile.bytes!,
+        filename: imageFile.name,
+      ),
+    );
+  } else {
+    throw Exception("Invalid image file");
+  }
 
   final response = await request.send();
+  final body = await response.stream.bytesToString();
 
   if (response.statusCode == 200) {
-    final responseData = await response.stream.bytesToString();
-    return json.decode(responseData);
+    return json.decode(body);
   } else {
-    throw Exception('Failed to check image blur');
+    throw Exception("Blur check failed: $body");
   }
 }
 
@@ -37,7 +54,7 @@ Future<PlatformFile> pickPaddyImage() async {
         PlatformFile file = result.files.single;
         return file;
       } else {
-        throw Exception('File path is null');
+        return Future.error('File path is null');
       }
     }
   } catch (e) {

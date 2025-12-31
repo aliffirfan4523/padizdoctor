@@ -5,20 +5,25 @@ import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/camera_gallery/image_preview_service.dart';
 
 class ReviewCapturePage extends StatefulWidget {
-  PlatformFile originalImage;
+  final PlatformFile originalImage;
   PlatformFile editedImage;
+  bool status;
+  final double? blurScore;
 
-  ReviewCapturePage({
-    super.key,
-    required this.originalImage,
-    required this.editedImage,
-  });
+  ReviewCapturePage(
+      {super.key,
+      required this.originalImage,
+      required this.editedImage,
+      required this.status,
+      this.blurScore});
 
   @override
   State<ReviewCapturePage> createState() => _ReviewCapturePageState();
 }
 
 class _ReviewCapturePageState extends State<ReviewCapturePage> {
+  Color acceptedColor = Colors.green;
+  Color rejectedColor = Colors.red;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,7 +33,21 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
           children: [
             _buildHeader(context),
             Expanded(child: _buildImagePreview()),
-            _buildTools(),
+            widget.status
+                ? _buildTools()
+                : Container(
+                    height: 100,
+                    child: Center(
+                      child: Text(
+                        "Blur Score: ${widget.blurScore}",
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
             _buildRunButton(),
           ],
         ),
@@ -49,8 +68,6 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
   }
 
   void resetImageEdit() {
-    if (widget.originalImage == null) return;
-
     setState(() {
       widget.editedImage = widget.originalImage;
     });
@@ -107,7 +124,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: const Color(0xFF00FF66),
+                  color: widget.status ? acceptedColor : rejectedColor,
                   width: 3,
                 ),
               ),
@@ -137,12 +154,13 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
       decoration: BoxDecoration(
         color: const Color(0xFF0E3A22),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF00FF66)),
+        border:
+            Border.all(color: widget.status ? acceptedColor : rejectedColor),
       ),
-      child: const Text(
-        "✓ AI READY",
+      child: Text(
+        widget.status ? "✓ AI READY" : "✗ AI NOT READY",
         style: TextStyle(
-          color: Color(0xFF00FF66),
+          color: widget.status ? acceptedColor : rejectedColor,
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
@@ -152,20 +170,23 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
 
   Widget _focusVerified() {
     return Column(
-      children: const [
-        Icon(Icons.check_circle, color: Color(0xFF00FF66), size: 28),
+      children: [
+        Icon(widget.status ? Icons.check_circle : Icons.block,
+            color: widget.status ? acceptedColor : rejectedColor, size: 28),
         SizedBox(height: 6),
         Text(
-          "Focus Verified",
+          widget.status ? "Focus Verified" : "Focus Not Verified",
           style: TextStyle(
-            color: Color(0xFF00FF66),
+            color: widget.status ? acceptedColor : rejectedColor,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
         ),
         SizedBox(height: 4),
         Text(
-          "Image is clear and ready for disease analysis",
+          widget.status
+              ? "Image is clear and ready for disease analysis"
+              : "Image is blurry. Please retake the photo.",
           style: TextStyle(
             fontSize: 12,
           ),
@@ -206,28 +227,30 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
 
   // ---------------- RUN BUTTON ----------------
   Widget _buildRunButton() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
-      child: SizedBox(
-        width: double.infinity,
-        height: 54,
-        child: ElevatedButton.icon(
-          onPressed: () {
-            // TODO: Run diagnosis
-          },
-          icon: const Icon(Icons.biotech),
-          label: const Text(
-            "Run Diagnosis",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
+    return InkWell(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+        child: SizedBox(
+          width: double.infinity,
+          height: 54,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              // TODO: Run diagnosis
+            },
+            icon: widget.status ? Icon(Icons.biotech) : Icon(Icons.block),
+            label: Text(
+              widget.status ? "Run Diagnosis" : "",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF00FF66),
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(14),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: widget.status ? acceptedColor : rejectedColor,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
             ),
           ),
         ),

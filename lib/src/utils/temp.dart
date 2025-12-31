@@ -1,1 +1,1 @@
-var IP_ADDRESS = "192.168.0.34";
+var IP_ADDRESS = "https://padizdoctor-backend-production.up.railway.app/";
