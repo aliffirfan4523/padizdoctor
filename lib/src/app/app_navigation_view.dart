@@ -39,7 +39,10 @@ class _MainNavigationViewState extends State<MainNavigationView> {
       if (!mounted) return;
 
       setState(() {
-        _userData = doc.data() as Map<String, dynamic>;
+        _userData = {
+          ...doc.data()!,
+          'user_id': doc.id,
+        };
         _loading = false;
       });
     });

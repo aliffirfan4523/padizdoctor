@@ -3,16 +3,17 @@ import 'package:padizdoctor/src/user/my_history/disease.dart';
 
 class BoundingBoxPainter extends CustomPainter {
   final List<Detection> detections;
+  final double confidence_score;
   final Size imageSize;
 
-  BoundingBoxPainter(this.detections, this.imageSize);
+  BoundingBoxPainter(this.detections, this.imageSize, this.confidence_score);
 
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
-      ..color = Colors.green;
+      ..color = const Color.fromARGB(255, 175, 76, 76);
 
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
@@ -35,10 +36,9 @@ class BoundingBoxPainter extends CustomPainter {
 
       // Draw label
       textPainter.text = TextSpan(
-        text: "${(detection.confidence * 100).toStringAsFixed(0)}%",
+        text: "${(confidence_score * 100).toStringAsFixed(0)}%",
         style: const TextStyle(
-          color: Colors.black,
-          backgroundColor: Colors.green,
+          backgroundColor: Color.fromARGB(255, 175, 76, 76),
           fontSize: 12,
           fontWeight: FontWeight.bold,
         ),

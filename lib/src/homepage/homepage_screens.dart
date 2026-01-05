@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/src/auth/auth_service.dart';
 import 'package:padizdoctor/src/camera_gallery/gallery.dart';
 import 'package:padizdoctor/src/homepage/homepage_service.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
+
+import '../reusable_widgets/Recent_Scans_List.dart';
+import '../reusable_widgets/reusable_header.dart';
 
 class HomepageScreens extends StatefulWidget {
   HomepageScreens({super.key, required this.controller, required this.user});
@@ -29,18 +31,15 @@ class _HomepageScreensState extends State<HomepageScreens> {
               centerTitle: true,
               leading: Padding(
                 padding: const EdgeInsets.all(10.0),
-                child: InkWell(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(40.0),
-                      child: CachedNetworkImage(
-                        imageUrl: widget.user["profilePicture"] ??
-                            "https://static.vecteezy.com/system/resources/previews/043/338/613/non_2x/round-anonymous-person-icon-vector.jpg",
-                        placeholder: (context, url) =>
-                            Icon(Icons.person_4_rounded),
-                        errorWidget: (context, url, error) => Icon(Icons.error),
-                      ),
-                    ),
-                    onTap: () => ModalBottomSheet(context)),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(40.0),
+                  child: CachedNetworkImage(
+                    imageUrl: widget.user["profilePicture"] ??
+                        "https://static.vecteezy.com/system/resources/previews/043/338/613/non_2x/round-anonymous-person-icon-vector.jpg",
+                    placeholder: (context, url) => Icon(Icons.person_4_rounded),
+                    errorWidget: (context, url, error) => Icon(Icons.error),
+                  ),
+                ),
               ),
               title: Text("PadizDoctor"),
             ),
@@ -130,32 +129,9 @@ class _HomepageScreensState extends State<HomepageScreens> {
               ],
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("Recent Diagnosis",
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                TextButton(
-                  child: Text("View All"),
-                  onPressed: () {},
-                )
-              ],
-            ),
-            ListView.builder(
-                itemBuilder: (context, x) {
-                  return Card(
-                    child: ListTile(
-                      leading: Icon(Icons.local_florist),
-                      title: Text("Crop ${x + 1}"),
-                      subtitle: Text("Diagnosis details here"),
-                      trailing: Text("Date"),
-                    ),
-                  );
-                },
-                itemCount: 3,
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics()),
+            buildHeader(title: "Recent Scans"),
+            // Shows only the 3 most recent scans
+            RecentScansList(userId: widget.user["user_id"], limit: 3),
           ],
         ));
   }
@@ -246,77 +222,6 @@ class _HomepageScreensState extends State<HomepageScreens> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12)),
               ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<dynamic> ModalBottomSheet(BuildContext context) {
-    return showModalBottomSheet(
-      context: context,
-      builder: (context) => Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircleAvatar(
-                radius: 40,
-                backgroundImage: CachedNetworkImageProvider(
-                  widget.user["profilePictureUrl"] ??
-                      "https://static.vecteezy.com/system/resources/previews/043/338/613/non_2x/round-anonymous-person-icon-vector.jpg",
-                ), // Replace with your asset or NetworkImage
-              ),
-              SizedBox(width: 30),
-              Text(
-                widget.user["fullName"] ??
-                    'User', // Replace with actual user name
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-          SizedBox(height: 24),
-          DropdownButton<ThemeMode>(
-            // Read the selected themeMode from the controller
-            value: widget.controller.themeMode,
-            // Call the updateThemeMode method any time the user selects a theme.
-            onChanged: widget.controller.updateThemeMode,
-            items: const [
-              DropdownMenuItem(
-                value: ThemeMode.system,
-                child: Text('System Theme'),
-              ),
-              DropdownMenuItem(
-                value: ThemeMode.light,
-                child: Text('Light Theme'),
-              ),
-              DropdownMenuItem(
-                value: ThemeMode.dark,
-                child: Text('Dark Theme'),
-              )
-            ],
-          ),
-          SizedBox(height: 24),
-          SizedBox(
-            width: MediaQuery.sizeOf(context).width * 0.8,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  shadowColor: Colors.blueGrey),
-              onPressed: () {
-                // Add your logout logic here
-                Navigator.of(context).pop();
-                AuthService.instance.signOut();
-                Navigator.pushReplacementNamed(context, "/login");
-              },
-              icon: Icon(Icons.logout),
-              label: Text('Logout'),
             ),
           ),
         ],

@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 Image logoWidget(String imageName) {
@@ -9,8 +10,6 @@ Image logoWidget(String imageName) {
     //color: Colors.white,
   );
 }
-
-
 
 Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap,
     {required int borderRadius,
@@ -41,4 +40,24 @@ Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap,
       ),
     ),
   );
+}
+
+String formatTimestamp(Timestamp? timestamp) {
+  if (timestamp == null) return "";
+  var date = timestamp.toDate();
+  return "${date.hour}:${date.minute.toString().padLeft(2, '0')}";
+}
+
+// Helpers for dynamic UI
+Color getStatusColor(String? status) {
+  if (status == "Healthy") return Colors.greenAccent;
+  if (status == "Low") return Colors.yellowAccent;
+  if (status == "MEDIUM") return Colors.orangeAccent;
+  return Colors.redAccent;
+}
+
+IconData getStatusIcon(String? status) {
+  if (status == "Healthy") return Icons.check_circle;
+  if (status == "Moderate Risk") return Icons.warning;
+  return Icons.error;
 }

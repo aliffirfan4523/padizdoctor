@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/homepage/homepage_screens.dart';
 import 'package:padizdoctor/src/settings/settings_controller.dart';
-import 'package:padizdoctor/src/user/my_activity/my_activity.dart';
 import 'package:padizdoctor/src/user/my_history/my_history.dart';
 import 'package:padizdoctor/src/user/my_profile/my_profile.dart';
+
+import '../reusable_widgets/upcoming_page.dart';
 
 class AppScaffold extends StatefulWidget {
   AppScaffold({super.key, required this.controller, required this.user});
@@ -23,8 +24,10 @@ class _AppScaffoldState extends State<AppScaffold> {
         index: selectedIndex,
         children: [
           HomepageScreens(controller: widget.controller, user: widget.user),
-          MyHistory(),
-          MyActivity(),
+          MyHistory(
+            currentUserId: widget.user['user_id'],
+          ),
+          UnderConstructionPage(),
           MyProfile(
             controller: widget.controller,
             user: widget.user,

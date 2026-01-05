@@ -47,11 +47,7 @@ class _MyProfileState extends State<MyProfile> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 10),
-                Text("My Profiles",
-                    style:
-                        TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
-                SizedBox(height: 20),
+                SizedBox(height: 50),
                 Center(
                   child: Column(
                     children: [
@@ -192,11 +188,11 @@ class _MyProfileState extends State<MyProfile> {
                 ),
                 SizedBox(height: 20),
                 TextColorButton(
-                    isEmailChanged && isNameChanged
+                    isEmailChanged || isNameChanged
                         ? Colors.green
                         : Colors.grey,
                     "Save Changes", () {
-                  if (isEmailChanged && isNameChanged) {
+                  if (isEmailChanged || isNameChanged) {
                     if (_formKey.currentState!.validate()) {
                       service.updateUserInfo(
                         fullNameController.text,

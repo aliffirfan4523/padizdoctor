@@ -1,74 +1,40 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/src/reusable_widgets/Recent_Scans_List.dart';
+
+import '../../reusable_widgets/reusable_header.dart';
 
 class MyHistory extends StatefulWidget {
-  const MyHistory({super.key});
-
+  MyHistory({super.key, required this.currentUserId});
+  final String currentUserId;
   @override
   State<MyHistory> createState() => _MyHistoryState();
 }
 
 class _MyHistoryState extends State<MyHistory> {
+  final String userId = FirebaseAuth.instance.currentUser!.uid;
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Column(
-        children: [
-          AppBar(
-            automaticallyImplyLeading: false,
-            title: Text(
-              'My History',
-              style: TextStyle(fontSize: 24),
-            ),
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Recent Scans',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-              TextButton(
-                onPressed: () {
-                  // Handle view all action
-                },
-                child: Text('View All'),
-              ),
-            ],
-          ),
-          ListView.builder(
-            itemCount: 20,
-            shrinkWrap: true,
-            physics: NeverScrollableScrollPhysics(),
-            itemBuilder: (BuildContext context, int index) {
-              return Padding(
-                padding: const EdgeInsets.all(10),
-                child: Card(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      SizedBox(width: 10),
-                      Icon(Icons.image, size: 80),
-                      Column(
-                        children: [
-                          Text("Tomato Blight"),
-                          Text("Action Required"),
-                          Text("Confidence: 96%")
-                        ],
-                      ),
-                      Text("3 hours ago"),
-                      Icon(Icons.arrow_forward_ios),
-                      SizedBox(width: 10)
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        title: const Text('My History',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+
+            // 2. Recent Scans List (Dynamic)
+            buildHeader(title: "Recent Scans"),
+            SizedBox(height: 20),
+            RecentScansList(userId: widget.currentUserId, limit: 3)
+          ],
+        ),
       ),
     );
   }
