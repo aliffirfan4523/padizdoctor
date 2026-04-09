@@ -12,7 +12,6 @@ class UnderConstructionPage extends StatelessWidget {
         title: const Text(
           'Under Construction',
           style: TextStyle(
-            color: Colors.white,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -58,7 +57,6 @@ class UnderConstructionPage extends StatelessWidget {
                     ),
                     child: const Icon(
                       Icons.construction,
-                      color: Colors.white,
                       size: 22,
                     ),
                   ),
@@ -72,7 +70,6 @@ class UnderConstructionPage extends StatelessWidget {
             const Text(
               'Feature Coming Soon',
               style: TextStyle(
-                color: Colors.white,
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
               ),
@@ -86,7 +83,6 @@ class UnderConstructionPage extends StatelessWidget {
               'This advanced diagnostic tool is currently under development. '
               'Stay tuned!',
               style: TextStyle(
-                color: Colors.white70,
                 fontSize: 14,
                 height: 1.6,
               ),

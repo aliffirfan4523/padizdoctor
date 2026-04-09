@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 //https://padizdoctor-backend-production.up.railway.app/check-blur/
 Future<Map<String, dynamic>> checkImageBlur(PlatformFile imageFile) async {
   final uri = Uri.parse(
-    'http://10.250.175.36:8000/check-blur/',
+    'https://api.padizdoctor.me/check-blur/',
   );
 
   final request = http.MultipartRequest('POST', uri);

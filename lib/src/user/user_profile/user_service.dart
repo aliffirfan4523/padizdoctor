@@ -46,8 +46,27 @@ class UserService {
       String uid = user.uid;
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
         'fullName': fullName,
-        'email': email,
       });
+    }
+  }
+
+  Future<void> updateEmailAddress(String newEmail) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    try {
+      if (user != null) {
+        await user.verifyBeforeUpdateEmail(newEmail);
+        print(
+            'Verification email sent to new address. Email will update after verification.');
+      }
+    } on FirebaseAuthException catch (e) {
+      // Handle specific Firebase Auth errors
+      print('Failed to update email: ${e.message}');
+      if (e.code == 'requires-recent-login') {
+        // Prompt the user to re-authenticate
+        print('User must re-authenticate before updating email.');
+      }
+    } catch (e) {
+      print('An error occurred: $e');
     }
   }
 

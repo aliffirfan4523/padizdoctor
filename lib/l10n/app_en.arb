@@ -2,5 +2,246 @@
   "appTitle": "PadizDoctor",
   "@appTitle": {
     "description": "The title of the application"
-  }
-}
+  },
+  "welcomeBack": "Welcome Back",
+  "@welcomeBack": {
+    "description": "Welcome message for returning users"
+  },
+  "loginToContinue": "Login to continue",
+  "@loginToContinue": {
+    "description": "Instruction to login"
+  },
+  "email": "Email",
+  "@email": {
+    "description": "Email field label"
+  },
+  "password": "Password",
+  "@password": {
+    "description": "Password field label"
+  },
+  "forgotPassword": "Forgot Password?",
+  "@forgotPassword": {
+    "description": "Forgot password link"
+  },
+  "login": "Login",
+  "@login": {
+    "description": "Login button"
+  },
+  "dontHaveAnAccount": "Don't have an account?",
+  "@dontHaveAnAccount": {
+    "description": "Prompt for new users"
+  },
+  "signUp": "Sign Up",
+  "@signUp": {
+    "description": "Sign up button"
+  },
+  "orContinueWith": "Or continue with",
+  "@orContinueWith": {
+    "description": "Social login separator"
+  },
+  "loading": "Loading...",
+  "@loading": {
+    "description": "Loading indicator"
+  },
+  "error": "Error",
+  "@error": {
+    "description": "Error dialog title"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "OK button"
+  },
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button"
+  },
+  "logout": "Logout",
+  "@logout": {
+    "description": "Logout option"
+  },
+  "logoutConfirmation": "Are you sure you want to logout?",
+  "@logoutConfirmation": {
+    "description": "Logout confirmation dialog"
+  },
+  "yes": "Yes",
+  "@yes": {
+    "description": "Yes button"
+  },
+  "no": "No",
+  "@no": {
+    "description": "No button"
+  },
+  "emailHint": "Enter your email address",
+  "@emailHint": {
+    "description": "Email field hint"
+  },
+  "passwordHint": "Enter your password",
+  "@passwordHint": {
+    "description": "Password field hint"
+  },
+  "emailRequired": "Email is required",
+  "@emailRequired": {
+    "description": "Email validation error"
+  },
+  "invalidEmail": "Please enter a valid email",
+  "@invalidEmail": {
+    "description": "Email format validation error"
+  },
+  "passwordRequired": "Password is required",
+  "@passwordRequired": {
+    "description": "Password validation error"
+  },
+  "passwordMinLength": "Password must be at least 6 characters",
+  "@passwordMinLength": {
+    "description": "Password length validation error"
+  },
+  "loginFailed": "Login failed",
+  "@loginFailed": {
+    "description": "Login failure message"
+  },
+  "invalidCredentials": "Invalid email or password",
+  "@invalidCredentials": {
+    "description": "Invalid credentials message"
+  },
+  "networkError": "Network error",
+  "@networkError": {
+    "description": "Network connectivity error"
+  },
+  "somethingWentWrong": "Something went wrong",
+  "@somethingWentWrong": {
+    "description": "General error message"
+  },
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Try again button"
+  },
+  "home": "Home",
+  "@home": {
+    "description": "Home tab"
+  },
+  "appointments": "Appointments",
+  "@appointments": {
+    "description": "Appointments tab"
+  },
+  "chat": "Chat",
+  "@chat": {
+    "description": "Chat tab"
+  },
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile tab"
+  },
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "Welcome greeting"
+  },
+  "howAreYouFeeling": "How are you feeling today?",
+  "@howAreYouFeeling": {
+    "description": "Greeting before symptom check"
+  },
+  "startSymptomCheck": "Start Symptom Check",
+  "@startSymptomCheck": {
+    "description": "Button to start symptom check"
+  },
+  "symptomChecker": "Symptom Checker",
+  "@symptomChecker": {
+    "description": "Symptom checker title"
+  },
+  "selectSymptoms": "Select Symptoms",
+  "@selectSymptoms": {
+    "description": "Symptom selection title"
+  },
+  "selectAtLeastOneSymptom": "Please select at least one symptom",
+  "@selectAtLeastOneSymptom": {
+    "description": "Symptom validation error"
+  },
+  "next": "Next",
+  "@next": {
+    "description": "Next button"
+  },
+  "back": "Back",
+  "@back": {
+    "description": "Back button"
+  },
+  "submit": "Submit",
+  "@submit": {
+    "description": "Submit button"
+  },
+  "analyzingSymptoms": "Analyzing symptoms...",
+  "@analyzingSymptoms": {
+    "description": "Analysis progress message"
+  },
+  "possibleConditions": "Possible Conditions",
+  "@possibleConditions": {
+    "description": "Possible conditions title"
+  },
+  "basedOnYourSymptoms": "Based on the symptoms you selected",
+  "@basedOnYourSymptoms": {
+    "description": "Condition explanation"
+  },
+  "viewDetails": "View Details",
+  "@viewDetails": {
+    "description": "View details button"
+  },
+  "noConditionsFound": "No conditions found",
+  "@noConditionsFound": {
+    "description": "No results message"
+  },
+  "tryDifferentSymptoms": "Try selecting different symptoms",
+  "@tryDifferentSymptoms": {
+    "description": "Suggestion for no results"
+  },
+  "conditionDetails": "Condition Details",
+  "@conditionDetails": {
+    "description": "Condition details title"
+  },
+  "description": "Description",
+  "@description": {
+    "description": "Description section"
+  },
+  "symptoms": "Symptoms",
+  "@symptoms": {
+    "description": "Symptoms section"
+  },
+  "treatment": "Treatment",
+  "@treatment": {
+    "description": "Treatment section"
+  },
+  "prevention": "Prevention",
+  "@prevention": {
+    "description": "Prevention section"
+  },
+  "whenToSeeDoctor": "When to See a Doctor",
+  "@whenToSeeDoctor": {
+    "description": "When to seek medical help"
+  },
+  "scheduleAppointment": "Schedule Appointment",
+  "@scheduleAppointment": {
+    "description": "Schedule appointment button"
+  },
+  "bookAppointment": "Book Appointment",
+  "@bookAppointment": {
+    "description": "Book appointment title"
+  },
+  "selectDoctor": "Select Doctor",
+  "@selectDoctor": {
+    "description": "Doctor selection title"
+  },
+  "selectDate": "Select Date",
+  "@selectDate": {
+    "description": "Date selection title"
+  },
+  "selectTime": "Select Time",
+  "@selectTime": {
+    "description": "Time selection title"
+  },
+  "appointmentDetails": "Appointment Details",
+  "@appointmentDetails": {
+    "description": "Appointment details title"
+  },
+  "doctor": "Doctor",
+  "@doctor": {
+    "description": "Doctor field label"
+  },
+  "date": "Date",
+  "@
