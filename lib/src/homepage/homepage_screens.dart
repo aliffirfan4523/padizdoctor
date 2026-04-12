@@ -59,6 +59,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
               child: _buildAICard(),
             ),
             SizedBox(height: 30),
+            /*
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -128,9 +129,10 @@ class _HomepageScreensState extends State<HomepageScreens> {
                 ),
               ],
             ),
-            SizedBox(height: 20),
+            SizedBox(height: 20),*/
             buildHeader(title: "Recent Scans"),
             // Shows only the 3 most recent scans
+            SizedBox(height: 20),
             RecentScansList(userId: widget.user["user_id"], limit: 3),
           ],
         ));

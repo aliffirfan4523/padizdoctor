@@ -40,6 +40,47 @@ Future<Map<String, dynamic>> checkImageBlur(PlatformFile imageFile) async {
   }
 }
 
+Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
+  final uri = Uri.parse(
+    'https://api.padizdoctor.me/detect',
+  );
+  final String extension = imageFile.extension ?? 'jpg';
+  final request = http.MultipartRequest('POST', uri);
+
+  if (imageFile.path != null) {
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path!,
+        // THIS IS THE KEY FIX:
+        contentType: http.MediaType('image', extension),
+      ),
+    );
+  } else if (imageFile.bytes != null) {
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'file',
+        imageFile.bytes!,
+        filename: imageFile.name,
+        // AND HERE FOR BYTES:
+        contentType: http.MediaType('image', extension),
+      ),
+    );
+  } else {
+    throw Exception("Invalid image file");
+  }
+
+  final response = await request.send();
+  final body = await response.stream.bytesToString();
+  print('Response Status: ${response.statusCode}');
+  print('Response Body: $body');
+  if (response.statusCode == 200) {
+    return json.decode(body);
+  } else {
+    throw Exception("Inference failed: $body");
+  }
+}
+
 Future<PlatformFile> pickPaddyImage() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
     type: FileType.any,

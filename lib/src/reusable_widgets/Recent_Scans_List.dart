@@ -25,30 +25,32 @@ class RecentScansList extends StatelessWidget {
           scans = scans.sublist(0, limit);
         }
 
-        return ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: scans.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final scan = scans[index];
-            return ScanCard(
-              title: scan['result']['disease_id'] == 'dis_rice_001'
-                  ? "Rice Leaf Folder"
-                  : "Healthy",
-              subtitle: scan['result']['severity'] ?? "Unknown",
-              recordId: scan['record_id'],
-              imageId: scan['record']['image_id'],
-              detail:
-                  "Confidence: ${((scan['result']['confidence_scores'] ?? 0) * 100).toStringAsFixed(0)}%",
-              time: formatTimestamp(scan['record']['timestamp']),
-              imagePath: scan['image']['file_name'] ?? "",
-              statusColor: getStatusColor(scan['result']['severity']),
-              statusIcon: getStatusIcon(scan['result']['severity']),
-              // ... pass other data as before
-            );
-          },
-        );
+        return scans.isNotEmpty
+            ? ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: scans.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final scan = scans[index];
+                  return ScanCard(
+                    title: scan['result']['disease_id'] == 'dis_rice_001'
+                        ? "Rice Leaf Folder"
+                        : "Healthy",
+                    subtitle: scan['result']['severity'] ?? "Unknown",
+                    recordId: scan['record_id'],
+                    imageId: scan['record']['image_id'],
+                    detail:
+                        "Confidence: ${((scan['result']['confidence_scores'] ?? 0) * 100).toStringAsFixed(0)}%",
+                    time: formatTimestamp(scan['record']['timestamp']),
+                    imagePath: scan['image']['file_name'] ?? "",
+                    statusColor: getStatusColor(scan['result']['severity']),
+                    statusIcon: getStatusIcon(scan['result']['severity']),
+                    // ... pass other data as before
+                  );
+                },
+              )
+            : const Center(child: Text("No recent scans available."));
       },
     );
   }

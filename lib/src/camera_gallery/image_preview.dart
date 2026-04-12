@@ -4,6 +4,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/src/camera_gallery/image_preview_service.dart';
 
+import 'gallery_service.dart';
+
 class ReviewCapturePage extends StatefulWidget {
   final PlatformFile originalImage;
   PlatformFile editedImage;
@@ -234,8 +236,9 @@ class _ReviewCapturePageState extends State<ReviewCapturePage> {
           width: double.infinity,
           height: 54,
           child: ElevatedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               // TODO: Run diagnosis
+              await inferenceImage(widget.editedImage);
             },
             icon: widget.status ? Icon(Icons.biotech) : Icon(Icons.block),
             label: Text(
