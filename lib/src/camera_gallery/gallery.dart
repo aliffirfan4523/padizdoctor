@@ -236,27 +236,12 @@ class _GalleryPickerState extends State<GalleryPicker> {
   }
 
   Future<void> _runImageQualityCheck(PlatformFile result) async {
-    // 1. Show loading screen
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ImageQualityLoading(
-          progress: 0.45,
-          percent: 45,
-          image: FileImage(File(result.path!)),
-          onCancel: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-    );
-
     try {
       // 2. Call API
-      final blurResult = await checkImageBlur(result);
+      //final blurResult = await checkImageBlur(result);
 
       // 3. Remove loading screen
-      Navigator.pop(context);
+      //Navigator.pop(context);
 
       // 4. Go to review page
       Navigator.push(
@@ -265,8 +250,8 @@ class _GalleryPickerState extends State<GalleryPicker> {
           builder: (_) => ReviewCapturePage(
             originalImage: result,
             editedImage: result,
-            status: !(blurResult['is_blurry'] as bool),
-            blurScore: blurResult['blur_score'],
+            //status: !(blurResult['is_blurry'] as bool),
+            //blurScore: blurResult['blur_score'],
           ),
         ),
       );

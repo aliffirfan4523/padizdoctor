@@ -70,15 +70,28 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
     throw Exception("Invalid image file");
   }
 
-  final response = await request.send();
-  final body = await response.stream.bytesToString();
+  final streamedResponse = await request.send();
+  final response = await http.Response.fromStream(streamedResponse);
   print('Response Status: ${response.statusCode}');
-  print('Response Body: $body');
+  print('Response Body: ${response.body}');
+
+  final decodedData = json.decode(response.body);
+
   if (response.statusCode == 200) {
-    return json.decode(body);
-  } else {
-    throw Exception("Inference failed: $body");
+    return decodedData;
   }
+  if (response.statusCode == 422) {
+    String errorMessage = decodedData['detail'] ?? "Validation error";
+
+    if (errorMessage == "BLURRY_IMAGE") {
+      throw Exception(
+          "The image is too blurry. Please try again with better lighting.");
+    }
+    throw Exception(errorMessage);
+  }
+
+  // Generic failure (500, 404, etc.)
+  throw Exception("Inference failed with status: ${response.statusCode}");
 }
 
 Future<PlatformFile> pickPaddyImage() async {
