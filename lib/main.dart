@@ -2,12 +2,12 @@ import 'package:camera/camera.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
-import 'package:padizdoctor/src/auth/auth_service.dart';
+import 'package:padizdoctor/features/auth/services/auth_service.dart';
 
 import 'firebase_options.dart';
-import 'src/app.dart';
-import 'src/settings/settings_controller.dart';
-import 'src/settings/settings_service.dart';
+import 'app.dart';
+import 'features/settings/services/settings_controller.dart';
+import 'features/settings/services/settings_service.dart';
 
 void main() async {
   // Set up the SettingsController, which will glue user settings to multiple
