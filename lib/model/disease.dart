@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'model.dart';
+
 class Disease {
   String id;
   String disease_name;
@@ -10,16 +12,11 @@ class Disease {
     required this.disease_name,
     required this.description,
   });
-}
 
-class Detection {
-  final String label;
-  final double confidence;
-  final Rect bbox;
-
-  Detection({
-    required this.label,
-    required this.confidence,
-    required this.bbox,
-  });
+  Map<String, dynamic> toJson() {
+    return {
+      'disease_name': disease_name,
+      'description': description,
+    };
+  }
 }

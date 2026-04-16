@@ -14,4 +14,13 @@ class ImageFile {
     required this.size_mb,
     required this.uploaded_at,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'file_name': file_name,
+      'format': format,
+      'size_mb': size_mb,
+      'uploaded_at': uploaded_at,
+    };
+  }
 }

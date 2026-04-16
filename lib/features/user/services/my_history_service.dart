@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:rxdart/rxdart.dart';
 
 // 1. Create a model to hold the combined data
@@ -98,5 +99,63 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
     };
   } catch (e) {
     rethrow;
+  }
+}
+
+Future<void> deleteDiagnosisRecord(
+    String recordId, String userId, String imageId) async {
+  final firestore = FirebaseFirestore.instance;
+  final storage = FirebaseStorage.instance;
+  final batch = firestore.batch();
+
+  try {
+    print("DEBUG DELETE: recordId=$recordId, userId=$userId, imageId=$imageId");
+
+    if (recordId == null || userId == null || imageId == null) {
+      print("❌ ERROR: One of the required fields is NULL!");
+      return;
+    }
+    // 1. Delete Image from Storage
+    // Ensure you use the correct path: diagnosis_images/{userId}/{fileName}
+    final imageDoc = await firestore.collection('ImageFile').doc(imageId).get();
+    await storage.refFromURL(imageDoc.data()?['file_name'] as String).delete();
+
+    // 2. Delete the main Record
+    batch.delete(firestore.collection('DiagnosisRecord').doc(recordId));
+    batch.delete(firestore.collection('ImageFile').doc(imageId));
+
+    // 3. Delete linked Results and Suggestions
+    // We query by record_id to find the 'sub-records' we created earlier
+    final results = await firestore
+        .collection('DiagnosisResult')
+        .where('record_id', isEqualTo: recordId)
+        .get();
+
+    final suggestions = await firestore
+        .collection('TreatmentSuggestion')
+        .where('record_id', isEqualTo: recordId)
+        .get();
+
+    for (var doc in results.docs) {
+      batch.delete(doc.reference);
+    }
+    for (var doc in suggestions.docs) {
+      batch.delete(doc.reference);
+    }
+
+    // 4. Update the Summary Count (Optional but recommended for your stats)
+    DocumentReference summaryRef = firestore
+        .collection('users')
+        .doc(userId)
+        .collection('activitySummary')
+        .doc('stats');
+
+    batch.update(summaryRef, {'totalSubmissions': FieldValue.increment(-1)});
+
+    // Commit all deletions
+    await batch.commit();
+    print("Record $recordId and image deleted successfully.");
+  } catch (e) {
+    print("Failed to delete record: $e");
   }
 }

@@ -34,6 +34,7 @@ class RecentScansList extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final scan = scans[index];
                   return ScanCard(
+                    userId: userId,
                     title: scan['result']['disease_id'] == 'dis_rice_001'
                         ? "Rice Leaf Folder"
                         : "Healthy",
@@ -41,7 +42,7 @@ class RecentScansList extends StatelessWidget {
                     recordId: scan['record_id'],
                     imageId: scan['record']['image_id'],
                     detail:
-                        "Confidence: ${((scan['result']['confidence_scores'] ?? 0) * 100).toStringAsFixed(0)}%",
+                        "Confidence: ${((scan['result']['confidence_score'] ?? 0) * 100).toStringAsFixed(0)}%",
                     time: formatTimestamp(scan['record']['timestamp']),
                     imagePath: scan['image']['file_name'] ?? "",
                     statusColor: getStatusColor(scan['result']['severity']),

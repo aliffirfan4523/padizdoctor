@@ -5,3 +5,4 @@ export 'disease.dart';
 export 'image_file.dart';
 export 'treatment_suggestion.dart';
 export 'users.dart';
+export 'llm_result.dart';

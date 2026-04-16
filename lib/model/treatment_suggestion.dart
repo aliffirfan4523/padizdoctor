@@ -12,4 +12,13 @@ class TreatmentSuggestion {
     required this.text,
     required this.type,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'record_id': record_id,
+      'source': source,
+      'text': text,
+      'type': type,
+    };
+  }
 }

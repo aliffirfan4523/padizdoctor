@@ -12,7 +12,7 @@ class UserService {
     bool isAdmin = false,
   }) async {
     final userRef = _db.collection('users').doc(firebaseUser.uid);
-    final activityRef = userRef.collection('activitySummary').doc();
+    final activityRef = userRef.collection('activitySummary').doc("stats");
 
     final batch = _db.batch();
 
@@ -31,7 +31,7 @@ class UserService {
     batch.set(activityRef, {
       'userId': firebaseUser.uid,
       'totalSubmissions': 0,
-      'avgDetectionTime': 0.0,
+      'totalProcessingTime': 0.0,
       'lastUpdated': FieldValue.serverTimestamp(),
     });
 
@@ -86,5 +86,40 @@ class UserService {
       // Handle specific errors like 'wrong-password' or 'requires-recent-login'
       return ("Error: ${e.message}");
     }
+  }
+
+  Future<void> migrateUserActivitySummary() async {
+    final usersSnapshot =
+        await FirebaseFirestore.instance.collection('users').get();
+
+    for (var userDoc in usersSnapshot.docs) {
+      String uid = userDoc.id;
+
+      // 1. Get the sub-collection 'activitySummary' for this user
+      var summarySnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('activitySummary')
+          .get();
+
+      for (var oldDoc in summarySnapshot.docs) {
+        // 2. Skip if it's already named 'stats'
+        if (oldDoc.id == 'stats') continue;
+
+        // 3. Copy data to the new 'stats' document
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(uid)
+            .collection('activitySummary')
+            .doc('stats')
+            .set(oldDoc.data(), SetOptions(merge: true));
+
+        // 4. Delete the old random ID document
+        await oldDoc.reference.delete();
+
+        print("Migrated $uid: Deleted ${oldDoc.id} -> Created 'stats'");
+      }
+    }
+    print("Migration Complete!");
   }
 }

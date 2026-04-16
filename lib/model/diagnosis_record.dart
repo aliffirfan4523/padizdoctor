@@ -12,4 +12,12 @@ class DiagnosisRecord {
     required this.timestamp,
     required this.user_id,
   });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'image_id': image_id,
+      'timestamp': timestamp,
+      'user_id': user_id,
+    };
+  }
 }

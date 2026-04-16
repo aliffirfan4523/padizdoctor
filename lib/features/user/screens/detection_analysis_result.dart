@@ -4,16 +4,23 @@ import 'package:padizdoctor/core/utils/bounding_box.dart';
 import '../../../model/model.dart';
 import '../services/my_history_service.dart'; // Ensure Detection class is here
 
-class AnalysisResultsScreen extends StatelessWidget {
+class AnalysisResultsScreen extends StatefulWidget {
   final String recordId;
   final String imageId;
+  final String userId;
 
   const AnalysisResultsScreen({
     super.key,
     required this.recordId,
     required this.imageId,
+    required this.userId,
   });
 
+  @override
+  State<AnalysisResultsScreen> createState() => _AnalysisResultsScreenState();
+}
+
+class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,9 +33,29 @@ class AnalysisResultsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              // Implement delete functionality
+              try {
+                deleteDiagnosisRecord(
+                    widget.recordId, widget.userId, widget.imageId);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Record deleted successfully")),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Failed to delete record")),
+                );
+              }
+            },
+          ),
+        ],
       ),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchFullAnalysisData(recordId, imageId),
+        future: fetchFullAnalysisData(widget.recordId, widget.imageId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -44,19 +71,26 @@ class AnalysisResultsScreen extends StatelessWidget {
           final disease = data['disease'];
 
           // Map Firestore boxes to your Detection model
-          final List<Detection> detections = (result['bounding_boxes'] as List)
-              .map((box) => Detection(
-                    bbox: Rect.fromLTRB(
-                      box['x1'].toDouble(),
-                      box['y1'].toDouble(),
-                      box['x2'].toDouble(),
-                      box['y2'].toDouble(),
-                    ),
-                    confidence: box['conf'] ?? 0.0,
-                    label: box['label'] ?? 'Affected Area',
-                  ))
-              .toList();
+          final List<BoundingBoxes> detections =
+              (result['bounding_boxes'] as List).map((box) {
+            // Pull values directly as doubles
+            double x1 = box['x1']?.toDouble() ?? 0.0;
+            double y1 = box['y1']?.toDouble() ?? 0.0;
+            double x2 = box['x2']?.toDouble() ?? 0.0;
+            double y2 = box['y2']?.toDouble() ?? 0.0;
 
+            return BoundingBoxes(
+              confidence: box['confidence']?.toDouble() ?? 0.0,
+              label: box['label'] ?? 'unknown',
+              x1: x1,
+              y1: y1,
+              x2: x2,
+              y2: y2,
+              // Calculate width/height from the flat numbers
+              width: (x2 - x1).toDouble(),
+              height: (y2 - y1).toDouble(),
+            );
+          }).toList();
           return SingleChildScrollView(
             child: Padding(
               padding: const EdgeInsets.only(left: 20.0, right: 20),
@@ -64,8 +98,10 @@ class AnalysisResultsScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(height: 30),
-                  _buildDetectionHeader(image['file_name'], detections,
-                      result['confidence_scores']),
+                  DetectionHeader(
+                    imageUrl: image['file_name'],
+                    detections: detections,
+                  ),
                   const SizedBox(height: 24),
                   Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -79,7 +115,7 @@ class AnalysisResultsScreen extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         // 3. Confidence Match Bar
-                        _buildConfidenceScore(result['confidence_scores']),
+                        _buildConfidenceScore(result['confidence_score']),
 
                         const SizedBox(height: 24),
 
@@ -108,36 +144,6 @@ class AnalysisResultsScreen extends StatelessWidget {
             ),
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildDetectionHeader(
-      String imageUrl, List<Detection> detections, double confidenceScore) {
-    double originalWidth = 0;
-    double originalHeight = 0;
-
-    getImageSize(imageUrl, (size) {
-      originalWidth = size.width;
-      originalHeight = size.height;
-    });
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(25),
-      child: AspectRatio(
-        aspectRatio: originalWidth / originalHeight,
-        child: LayoutBuilder(builder: (context, constraints) {
-          return Stack(
-            children: [
-              Image.network(imageUrl,
-                  fit: BoxFit.cover, width: double.infinity),
-              CustomPaint(
-                size: Size(constraints.maxWidth, constraints.maxHeight),
-                painter: BoundingBoxPainter(detections, const Size(640, 640),
-                    confidenceScore), // Model size from YOLO
-              ),
-            ],
-          );
-        }),
       ),
     );
   }
@@ -276,4 +282,73 @@ void getImageSize(String url, void Function(Size size) onResult) {
       onResult(mySize);
     }),
   );
+}
+
+// 1. Convert your helper to a proper Widget that handles its own state
+class DetectionHeader extends StatefulWidget {
+  final String imageUrl;
+  final List<BoundingBoxes> detections;
+
+  const DetectionHeader(
+      {super.key, required this.imageUrl, required this.detections});
+
+  @override
+  State<DetectionHeader> createState() => _DetectionHeaderState();
+}
+
+class _DetectionHeaderState extends State<DetectionHeader> {
+  Size? _imageSize;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadImageSize();
+  }
+
+  void _loadImageSize() {
+    final ImageStream stream = Image.network(widget.imageUrl)
+        .image
+        .resolve(const ImageConfiguration());
+    stream.addListener(ImageStreamListener((ImageInfo info, bool _) {
+      if (mounted) {
+        setState(() {
+          _imageSize =
+              Size(info.image.width.toDouble(), info.image.height.toDouble());
+        });
+      }
+    }));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_imageSize == null)
+      return const Center(child: CircularProgressIndicator());
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(25),
+      child: AspectRatio(
+        aspectRatio: _imageSize!.width / _imageSize!.height,
+        child: LayoutBuilder(builder: (context, constraints) {
+          return Stack(
+            children: [
+              // Use fit: BoxFit.fill to ensure the coordinates map 1:1 to the widget size
+              Image.network(
+                widget.imageUrl,
+                fit: BoxFit.fill,
+                width: constraints.maxWidth,
+                height: constraints.maxHeight,
+              ),
+              CustomPaint(
+                size: Size(constraints.maxWidth, constraints.maxHeight),
+                painter: BoundingBoxPainter(
+                  widget.detections,
+                  const Size(768, 768), // Your YOLO model input size
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
+    );
+  }
 }

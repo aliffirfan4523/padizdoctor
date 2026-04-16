@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:padizdoctor/features/camera_gallery/services/image_edit_service.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/upload_loading.dart';
 
+import '../../../model/llm_result.dart';
+import '../../../model/model.dart';
 import '../services/gallery_service.dart';
 
 class ReviewCapturePage extends StatefulWidget {
@@ -251,17 +253,56 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
             onPressed: () async {
               try {
                 // 1. Show loading screen
-                widget._isAnalyzing = true;
-                setState(() {});
+                setState(() => widget._isAnalyzing = true);
 
                 final result = await inferenceImage(widget.editedImage);
-                widget._isAnalyzing = false;
-                setState(() {});
+
+                LlmResult llmResult = LlmResult(
+                  detections: [
+                    for (var det in result['detections'])
+                      BoundingBoxes(
+                        confidence: det['confidence']?.toDouble() ?? 0.0,
+                        label: det['class'] ?? 'unknown',
+                        x1: det['bbox'][0].toDouble(),
+                        y1: det['bbox'][1].toDouble(),
+                        x2: det['bbox'][2].toDouble(),
+                        y2: det['bbox'][3].toDouble(),
+
+                        // Calculate width/height once here so you don't have to do it later
+                        width: (det['bbox'][2] - det['bbox'][0]).toDouble(),
+                        height: (det['bbox'][3] - det['bbox'][1]).toDouble(),
+                      )
+                  ],
+                  count: result['count'],
+                  processing_time_ms: result['processing_time_ms'],
+                  expert_advice:
+                      (result['expert_advice'] as Map<String, dynamic>)
+                          .entries
+                          .map((entry) {
+                    // entry.key is the disease name (e.g. 'rice_blast')
+                    // entry.value is the advice object
+                    var val = entry.value;
+                    return ExpertAdvice(
+                      diseaseName: entry.key,
+                      status:
+                          entry.key, // Using the key as the status/disease name
+                      severity: val['severity'] ?? 'unknown',
+                      treatment: val['treatment'] ?? 'Consult a specialist.',
+                      symptoms: (val['symptoms'] as List)
+                          .join(", "), // symptoms is a List in JSON
+                      source: val['source'] ?? 'AI Inference',
+                    );
+                  }).toList(),
+                );
+
+                await addInferenceResultToHistory(
+                    llmResult, widget.editedImage);
+
+                setState(() => widget._isAnalyzing = false);
                 print("Diagnosis success: ${result['label']}");
                 // TODO: Navigate to results page
               } catch (e) {
-                widget._isAnalyzing = false;
-                setState(() {});
+                setState(() => widget._isAnalyzing = false);
 
                 // This catches the 'throw Exception' from 422, 429, or 500
                 ScaffoldMessenger.of(context).showSnackBar(

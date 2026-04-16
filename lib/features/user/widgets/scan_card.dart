@@ -9,6 +9,7 @@ class ScanCard extends StatelessWidget {
   final IconData statusIcon;
   final String recordId;
   final String imageId;
+  final String userId;
 
   const ScanCard({
     super.key,
@@ -21,6 +22,7 @@ class ScanCard extends StatelessWidget {
     required this.statusIcon,
     required this.recordId,
     required this.imageId,
+    required this.userId,
   });
 
   @override
@@ -32,6 +34,7 @@ class ScanCard extends StatelessWidget {
           return AnalysisResultsScreen(
             recordId: recordId,
             imageId: imageId,
+            userId: userId, // Pass userId if needed
           );
         }));
       },

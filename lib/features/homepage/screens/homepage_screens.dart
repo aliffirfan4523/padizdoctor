@@ -132,8 +132,8 @@ class _HomepageScreensState extends State<HomepageScreens> {
             SizedBox(height: 20),*/
             buildHeader(title: "Recent Scans"),
             // Shows only the 3 most recent scans
-            SizedBox(height: 20),
-            RecentScansList(userId: widget.user["user_id"], limit: 3),
+            //SizedBox(height: 10),
+            RecentScansList(userId: widget.user["user_id"], limit: 10),
           ],
         ));
   }
