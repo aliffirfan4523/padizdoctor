@@ -39,13 +39,34 @@ class ScanService {
         return CombineLatestStream.combine2(
           imageStream,
           resultStream,
-          (img, res) => {
-            'record': recordData,
-            'record_id': doc.id,
-            'image': img.data() ?? {},
-            'result': res.docs.isNotEmpty ? res.docs.first.data() : {},
-          },
-        );
+          (img, res) => (img: img, res: res),
+        ).switchMap((data) {
+          final resultData =
+              data.res.docs.isNotEmpty ? data.res.docs.first.data() : null;
+          final diseaseId = resultData?['disease_id'] as String?;
+
+          if (diseaseId == null) {
+            return Stream.value({
+              'record': recordData,
+              'record_id': doc.id,
+              'image': data.img.data() ?? {},
+              'result': resultData ?? {},
+              'disease': {},
+            });
+          }
+
+          return FirebaseFirestore.instance
+              .collection('Disease')
+              .doc(diseaseId)
+              .snapshots()
+              .map((diseaseDoc) => {
+                    'record': recordData,
+                    'record_id': doc.id,
+                    'image': data.img.data() ?? {},
+                    'result': resultData ?? {},
+                    'disease': diseaseDoc.data() ?? {},
+                  });
+        });
       }).toList();
       return CombineLatestStream.list(streams);
     });
@@ -58,44 +79,49 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
   final db = FirebaseFirestore.instance;
 
   try {
-    // 1. Get the Result first to find the disease_id
+    // 1. Get ALL Results for this record
     final resultSnap = await db
         .collection('DiagnosisResult')
         .where('record_id', isEqualTo: recordId)
-        .limit(1)
         .get();
 
     if (resultSnap.docs.isEmpty) {
-      // Debug: Print the ID you are looking for to compare with Firestore console
-      print("DEBUG: No DiagnosisResult found for record_id: $recordId");
       throw "DiagnosisResult missing";
     }
-    final resultData = resultSnap.docs.first.data();
 
-    // 2. Fetch linked data in parallel: Image, Disease info, and AI Suggestions
-    final snapshots = await Future.wait([
-      db.collection('ImageFile').doc(imageId).get(),
-      db.collection('Disease').doc(resultData['disease_id']).get(),
-      db
-          .collection('TreatmentSuggestion') // Targeted collection
-          .where('record_id', isEqualTo: recordId)
-          .get(),
-    ]);
+    final resultsList = resultSnap.docs.map((doc) => doc.data()).toList();
 
-    final imageDoc = snapshots[0] as DocumentSnapshot;
-    final diseaseDoc = snapshots[1] as DocumentSnapshot;
-    final suggestionSnap = snapshots[2] as QuerySnapshot;
+    // 2. Fetch the image document
+    final imageDoc = await db.collection('ImageFile').doc(imageId).get();
+    if (!imageDoc.exists) throw "Image document not found";
 
-    if (!imageDoc.exists) throw "Image document not found in ImageFile";
-    if (!diseaseDoc.exists)
-      throw "Disease info not found for ${resultData['disease_id']}";
+    // 3. Fetch unique diseases found in results
+    final diseaseIds =
+        resultsList.map((r) => r['disease_id'] as String).toSet().toList();
+    final diseaseSnapshots = await Future.wait(
+      diseaseIds.map((id) => db.collection('Disease').doc(id).get()),
+    );
 
-    return {
-      'result': resultData,
+    final Map<String, dynamic> diseasesMap = <String, dynamic>{
+      for (var doc in diseaseSnapshots)
+        if (doc.exists) doc.id: doc.data()
+    };
+
+    // 4. Fetch all AI suggestions
+    final suggestionSnap = await db
+        .collection('TreatmentSuggestion')
+        .where('record_id', isEqualTo: recordId)
+        .get();
+
+    return <String, dynamic>{
+      'results': resultsList,
       'image': imageDoc.data(),
-      'disease': diseaseDoc.data(),
-      // Map the list of suggestions from the TreatmentSuggestion collection
-      'suggestions': suggestionSnap.docs.map((doc) => doc.data()).toList(),
+      'diseases': diseasesMap,
+      'suggestions': suggestionSnap.docs.map((doc) {
+        final data = doc.data() as Map<String, dynamic>;
+        data['id'] = doc.id; // Inject ID to match result ID
+        return data;
+      }).toList(),
     };
   } catch (e) {
     rethrow;

@@ -293,6 +293,8 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
                       source: val['source'] ?? 'AI Inference',
                     );
                   }).toList(),
+                  original_height: result['original_height'],
+                  original_width: result['original_width'],
                 );
 
                 await addInferenceResultToHistory(

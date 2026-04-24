@@ -35,9 +35,9 @@ class RecentScansList extends StatelessWidget {
                   final scan = scans[index];
                   return ScanCard(
                     userId: userId,
-                    title: scan['result']['disease_id'] == 'dis_rice_001'
-                        ? "Rice Leaf Folder"
-                        : "Healthy",
+                    title: scan['disease']?['disease_name'] ??
+                        scan['result']?['disease_id'] ??
+                        "Healthy",
                     subtitle: scan['result']['severity'] ?? "Unknown",
                     recordId: scan['record_id'],
                     imageId: scan['record']['image_id'],

@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 
 import '../../../model/model.dart';
 
-//https://padizdoctor-backend-production.up.railway.app/check-blur/
 Future<Map<String, dynamic>> checkImageBlur(PlatformFile imageFile) async {
   final uri = Uri.parse(
     'https://api.padizdoctor.me/check-blur/',
@@ -153,6 +152,8 @@ Future<void> addInferenceResultToHistory(
     format: imageFile.extension ?? 'jpg',
     size_mb: (imageFile.size / (1024 * 1024)).toDouble(),
     uploaded_at: Timestamp.now(),
+    width: llmResult.original_width,
+    height: llmResult.original_height,
   );
   DiagnosisRecord record = DiagnosisRecord(
     id: nowId,

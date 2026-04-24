@@ -15,6 +15,7 @@ class TreatmentSuggestion {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'record_id': record_id,
       'source': source,
       'text': text,

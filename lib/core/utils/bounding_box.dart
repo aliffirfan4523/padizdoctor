@@ -5,21 +5,29 @@ import '../../model/model.dart';
 class BoundingBoxPainter extends CustomPainter {
   final List<BoundingBoxes> detections;
   final Size imageSize;
+  final String? activeLabel;
 
-  BoundingBoxPainter(this.detections, this.imageSize);
+  BoundingBoxPainter(this.detections, this.imageSize, {this.activeLabel});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..color = const Color.fromARGB(255, 175, 76, 76);
-
     final textPainter = TextPainter(
       textDirection: TextDirection.ltr,
     );
 
     for (final detection in detections) {
+      // Logic to determine color based on active tab
+      final bool isActive = activeLabel != null &&
+          detection.label.toLowerCase() == activeLabel!.toLowerCase();
+
+      final Color mainColor =
+          isActive ? Colors.black : const Color.fromARGB(255, 175, 76, 76);
+
+      final paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = isActive ? 3 : 2 // Thicker for active
+        ..color = mainColor;
+
       // 1. Scaling Logic: model size → display size
       final scaleX = size.width / imageSize.width;
       final scaleY = size.height / imageSize.height;
@@ -37,11 +45,10 @@ class BoundingBoxPainter extends CustomPainter {
 
       // 3. Draw Label (using individual detection confidence)
       textPainter.text = TextSpan(
-        text:
-            "${detection.label} ${(detection.confidence * 100).toStringAsFixed(0)}%",
-        style: const TextStyle(
+        text: "${detection.label}",
+        style: TextStyle(
           color: Colors.white,
-          backgroundColor: Color.fromARGB(255, 175, 76, 76),
+          backgroundColor: mainColor,
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
