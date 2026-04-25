@@ -79,28 +79,40 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
     ),
   );
 
-  final streamedResponse = await request.send();
-  final response = await http.Response.fromStream(streamedResponse);
-  print('Response Status: ${response.statusCode}');
-  print('Response Body: ${response.body}');
+  try {
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
 
-  final decodedData = json.decode(response.body);
-
-  if (response.statusCode == 200) {
-    return decodedData;
-  }
-  if (response.statusCode == 422) {
-    String errorMessage = decodedData['detail'] ?? "Validation error";
-
-    if (errorMessage == "BLURRY_IMAGE") {
-      throw Exception(
-          "The image is too blurry. Please try again with better lighting.");
+    // Cloudflare returns 5xx for tunnel offline
+    if (response.statusCode >= 500) {
+      throw Exception('NETWORK_ERROR: Server returned ${response.statusCode}');
     }
-    throw Exception(errorMessage);
-  }
 
-  // Generic failure (500, 404, etc.)
-  throw Exception("Inference failed with status: ${response.statusCode}");
+    final decodedData = json.decode(response.body);
+
+    if (response.statusCode == 200) {
+      return decodedData;
+    }
+    if (response.statusCode == 422) {
+      String errorMessage = decodedData['detail'] ?? "Validation error";
+
+      if (errorMessage == "BLURRY_IMAGE") {
+        throw Exception(
+            "The image is too blurry. Please try again with better lighting.");
+      }
+      throw Exception(errorMessage);
+    }
+
+    // Generic failure (404, etc.)
+    throw Exception("Inference failed with status: ${response.statusCode}");
+  } catch (e) {
+    if (e is FormatException || e.toString().contains('NETWORK_ERROR')) {
+      throw Exception('NETWORK_ERROR: $e');
+    }
+    rethrow;
+  }
 }
 
 Future<PlatformFile> pickPaddyImage() async {
@@ -135,9 +147,9 @@ Future<String> addInferenceResultToHistory(
   try {
     llmResult.detections.sort((a, b) => b.confidence.compareTo(a.confidence));
 
-    // When no disease is detected, detections is empty — use 'healthy' as label.
+    // When no disease is detected, detections is empty — use 'Healthy' as label.
     final String primaryDiseaseId = llmResult.detections.isEmpty
-        ? 'healthy'
+        ? 'Healthy'
         : llmResult.detections.first.label;
 
     DocumentReference summaryRef = FirebaseFirestore.instance
@@ -179,7 +191,7 @@ Future<String> addInferenceResultToHistory(
     for (var advice in llmResult.expert_advice) {
       String subId = "${nowId}_${advice.status}";
 
-      // For healthy results, detections is empty so specificBoxes will be [].
+      // For Healthy results, detections is empty so specificBoxes will be [].
       List<BoundingBoxes> specificBoxes = llmResult.detections.where((box) {
         return box.label.toLowerCase().replaceAll('_', '') ==
             advice.diseaseName.toLowerCase().replaceAll('_', '');
@@ -195,8 +207,8 @@ Future<String> addInferenceResultToHistory(
       DiagnosisResult result = DiagnosisResult(
         id: subId,
         record_id: record.id,
-        disease_id: advice.diseaseName, // 'healthy' for healthy scans
-        confidence_score: advice.diseaseName == 'healthy'
+        disease_id: advice.diseaseName, // 'Healthy' for Healthy scans
+        confidence_score: advice.diseaseName == 'Healthy'
             ? 1.0
             : (bestDet?.confidence ?? 0.0),
         severity: advice.severity,

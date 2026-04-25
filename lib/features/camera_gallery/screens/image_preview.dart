@@ -103,7 +103,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
   ///   "status": "success",
   ///   "results": {
   ///     // Healthy:
-  ///     "healthy": { "health_status": "Healthy", "advice": "..." }
+  ///     "Healthy": { "health_status": "Healthy", "advice": "..." }
   ///     // OR diseased:
   ///     "rice_blast": { "severity": "...", "treatment": "...", "symptoms": [...], "source": "..." }
   ///   }
@@ -122,14 +122,15 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
       // Skip metadata keys that are just strings/primitives (e.g., "status": "success")
       if (val is! Map) continue;
 
-      if (entry.key == 'healthy') {
+      if (entry.key == 'Healthy') {
         // Healthy entry inside "results"
         final detail = val.cast<String, dynamic>();
         advice.add(ExpertAdvice(
-          diseaseName: 'healthy',
+          diseaseName: 'Healthy',
           status: detail['health_status'] ?? 'Healthy',
           severity: 'None',
-          treatment: detail['advice'] ?? raw['advice'] ?? 'No treatment needed.',
+          treatment:
+              detail['advice'] ?? raw['advice'] ?? 'No treatment needed.',
           symptoms: 'None',
           source: 'AI Inference',
         ));
@@ -150,7 +151,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
     // Should never be empty, but guard anyway.
     if (advice.isEmpty) {
       advice.add(ExpertAdvice(
-        diseaseName: 'healthy',
+        diseaseName: 'Healthy',
         status: 'Healthy',
         severity: 'None',
         treatment: 'No treatment needed.',
@@ -329,13 +330,13 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
               // ── Phase 1: API inference ──────────────────────────────────
               // Inner try/catch handles ML/API errors (blurry image, server
               // errors, bad format). On failure → AnalysisFailed screen.
-              String recordId;
+              LlmResult? llmResult;
               try {
                 setState(() => widget._isAnalyzing = true);
 
                 final result = await inferenceImage(widget.editedImage);
 
-                final LlmResult llmResult = LlmResult(
+                llmResult = LlmResult(
                   detections: [
                     for (var det in result['detections'])
                       BoundingBoxes(
@@ -355,29 +356,56 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
                   count: (result['count'] as num).toInt(),
                   processing_time_ms:
                       (result['processing_time_ms'] as num).toDouble(),
-                  expert_advice:
-                      _parseExpertAdvice(result['expert_advice']),
+                  expert_advice: _parseExpertAdvice(result['expert_advice']),
                   original_height: (result['original_height'] as num).toInt(),
                   original_width: (result['original_width'] as num).toInt(),
                 );
+              } on Exception catch (inferenceError) {
+                setState(() => widget._isAnalyzing = false);
+                if (!context.mounted) return;
+                print("inferenceError: $inferenceError");
+                final errorStr = inferenceError.toString();
+                final isNetworkError = errorStr.contains('SocketException') ||
+                    errorStr.contains('ClientException') ||
+                    errorStr.contains('Failed host lookup') ||
+                    errorStr.contains('Connection refused') ||
+                    errorStr.contains('NETWORK_ERROR') ||
+                    errorStr.contains('status: 500') ||
+                    errorStr.contains('status: 503') ||
+                    errorStr.contains('status: 504');
 
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AnalysisConfirmationScreen(
+                      state: isNetworkError
+                          ? ConfirmationState.uploadFailed
+                          : ConfirmationState.analysisFailed,
+                      imageFile: widget.editedImage,
+                      errorMessage: errorStr.replaceAll('Exception: ', ''),
+                    ),
+                  ),
+                );
+                return;
+              }
+
+              String recordId;
+              try {
                 // ── Phase 2: Firebase save ────────────────────────────────
-                // If this throws, it is an upload/network error, caught below.
                 recordId = await addInferenceResultToHistory(
                     llmResult, widget.editedImage);
-              } on Exception catch (inferenceError) {
-                // API / ML failure → Analysis Failed screen
+              } on Exception catch (uploadError) {
+                // Network / Upload failure → Upload Failed screen
                 setState(() => widget._isAnalyzing = false);
                 if (!context.mounted) return;
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => AnalysisConfirmationScreen(
-                      state: ConfirmationState.analysisFailed,
+                      state: ConfirmationState.uploadFailed,
                       imageFile: widget.editedImage,
-                      errorMessage: inferenceError
-                          .toString()
-                          .replaceAll('Exception: ', ''),
+                      errorMessage:
+                          uploadError.toString().replaceAll('Exception: ', ''),
                     ),
                   ),
                 );

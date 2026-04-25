@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/features/homepage/screens/homepage_screens.dart';
 import 'package:padizdoctor/features/settings/services/settings_controller.dart';
+import 'package:padizdoctor/features/user/screens/my_activity.dart';
 import 'package:padizdoctor/features/user/screens/my_history.dart';
 import 'package:padizdoctor/features/user/screens/my_profile.dart';
 
@@ -27,7 +28,7 @@ class _AppScaffoldState extends State<AppScaffold> {
           MyHistory(
             currentUserId: widget.user['user_id'],
           ),
-          UnderConstructionPage(),
+          MyActivity(),
           MyProfile(
             controller: widget.controller,
             user: widget.user,

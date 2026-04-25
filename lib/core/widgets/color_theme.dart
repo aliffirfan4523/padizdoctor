@@ -15,7 +15,7 @@ class PaddyColors {
   static const Color waterBlue = Color(0xFF8EC5FC); // Irrigation water blue
 
   // 🍃 Health & Disease Status Colors
-  static const Color healthy = Color(0xFF2ECC71); // Healthy plant
+  static const Color Healthy = Color(0xFF2ECC71); // Healthy plant
   static const Color warning = Color(0xFFF1C40F); // Early infection
   static const Color danger = Color(0xFFE74C3C); // Severe disease
 
