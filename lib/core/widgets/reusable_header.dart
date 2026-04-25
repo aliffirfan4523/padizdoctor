@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 
-Widget buildHeader({required String title, bool enableViewAll = true}) {
+Widget buildHeader({
+  required String title,
+  bool enableViewAll = true,
+  VoidCallback? onViewAll,
+}) {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     children: [
@@ -8,7 +12,7 @@ Widget buildHeader({required String title, bool enableViewAll = true}) {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
       if (enableViewAll)
         TextButton(
-            onPressed: () {},
+            onPressed: onViewAll ?? () {},
             child: const Text("View More",
                 style: const TextStyle(color: Colors.greenAccent))),
     ],

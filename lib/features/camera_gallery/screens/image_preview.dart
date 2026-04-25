@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/features/camera_gallery/screens/analysis_confirmation.dart';
 import 'package:padizdoctor/features/camera_gallery/services/image_edit_service.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/upload_loading.dart';
+import 'package:padizdoctor/features/camera_gallery/widget/ToolItem.dart';
 
 import '../../../model/llm_result.dart';
 import '../../../model/model.dart';
@@ -85,6 +87,79 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
     setState(() {
       widget.editedImage = widget.originalImage;
     });
+  }
+
+  // ---------------- HELPERS ----------------
+
+  /// Parses bbox from either List [x1,y1,x2,y2] or Map {"x1","y1","x2","y2"}.
+  static double _bbox(dynamic bbox, int listIdx, String mapKey) {
+    if (bbox is List) return (bbox[listIdx] as num).toDouble();
+    if (bbox is Map) return (bbox[mapKey] as num).toDouble();
+    throw Exception('Unexpected bbox format: ${bbox.runtimeType}');
+  }
+
+  /// Parses expert_advice, which always has the shape:
+  /// {
+  ///   "status": "success",
+  ///   "results": {
+  ///     // Healthy:
+  ///     "healthy": { "health_status": "Healthy", "advice": "..." }
+  ///     // OR diseased:
+  ///     "rice_blast": { "severity": "...", "treatment": "...", "symptoms": [...], "source": "..." }
+  ///   }
+  /// }
+  static List<ExpertAdvice> _parseExpertAdvice(Map<String, dynamic> raw) {
+    // The actual data lives inside "results". Fall back to the top-level map
+    // for older API responses that don't have the wrapper.
+    final Map<String, dynamic> results =
+        (raw['results'] as Map?)?.cast<String, dynamic>() ?? raw;
+
+    // Iterate over every entry in results.
+    final List<ExpertAdvice> advice = [];
+    for (final entry in results.entries) {
+      final val = entry.value;
+
+      // Skip metadata keys that are just strings/primitives (e.g., "status": "success")
+      if (val is! Map) continue;
+
+      if (entry.key == 'healthy') {
+        // Healthy entry inside "results"
+        final detail = val.cast<String, dynamic>();
+        advice.add(ExpertAdvice(
+          diseaseName: 'healthy',
+          status: detail['health_status'] ?? 'Healthy',
+          severity: 'None',
+          treatment: detail['advice'] ?? raw['advice'] ?? 'No treatment needed.',
+          symptoms: 'None',
+          source: 'AI Inference',
+        ));
+      } else {
+        // Disease entry.
+        final detail = val.cast<String, dynamic>();
+        advice.add(ExpertAdvice(
+          diseaseName: entry.key,
+          status: entry.key,
+          severity: detail['severity'] ?? 'unknown',
+          treatment: detail['treatment'] ?? 'Consult a specialist.',
+          symptoms: (detail['symptoms'] as List? ?? []).join(', '),
+          source: detail['source'] ?? 'AI Inference',
+        ));
+      }
+    }
+
+    // Should never be empty, but guard anyway.
+    if (advice.isEmpty) {
+      advice.add(ExpertAdvice(
+        diseaseName: 'healthy',
+        status: 'Healthy',
+        severity: 'None',
+        treatment: 'No treatment needed.',
+        symptoms: 'None',
+        source: 'AI Inference',
+      ));
+    }
+
+    return advice;
   }
 
   // ---------------- HEADER ----------------
@@ -220,17 +295,17 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            _ToolItem(
+            ToolItem(
               icon: Icons.edit,
               label: "Edit",
               onTap: () => onCrop(context),
             ),
-            _ToolItem(
+            ToolItem(
               icon: Icons.refresh,
               label: "Reset",
               onTap: () => resetImageEdit(),
             ),
-            _ToolItem(
+            ToolItem(
               icon: Icons.image_rounded,
               label: "Change \nImage",
               onTap: () => {Navigator.pop(context)},
@@ -251,69 +326,78 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
           height: 54,
           child: ElevatedButton.icon(
             onPressed: () async {
+              // ── Phase 1: API inference ──────────────────────────────────
+              // Inner try/catch handles ML/API errors (blurry image, server
+              // errors, bad format). On failure → AnalysisFailed screen.
+              String recordId;
               try {
-                // 1. Show loading screen
                 setState(() => widget._isAnalyzing = true);
 
                 final result = await inferenceImage(widget.editedImage);
 
-                LlmResult llmResult = LlmResult(
+                final LlmResult llmResult = LlmResult(
                   detections: [
                     for (var det in result['detections'])
                       BoundingBoxes(
-                        confidence: det['confidence']?.toDouble() ?? 0.0,
+                        confidence:
+                            (det['confidence'] as num?)?.toDouble() ?? 0.0,
                         label: det['class'] ?? 'unknown',
-                        x1: det['bbox'][0].toDouble(),
-                        y1: det['bbox'][1].toDouble(),
-                        x2: det['bbox'][2].toDouble(),
-                        y2: det['bbox'][3].toDouble(),
-
-                        // Calculate width/height once here so you don't have to do it later
-                        width: (det['bbox'][2] - det['bbox'][0]).toDouble(),
-                        height: (det['bbox'][3] - det['bbox'][1]).toDouble(),
+                        x1: _bbox(det['bbox'], 0, 'x1'),
+                        y1: _bbox(det['bbox'], 1, 'y1'),
+                        x2: _bbox(det['bbox'], 2, 'x2'),
+                        y2: _bbox(det['bbox'], 3, 'y2'),
+                        width: _bbox(det['bbox'], 2, 'x2') -
+                            _bbox(det['bbox'], 0, 'x1'),
+                        height: _bbox(det['bbox'], 3, 'y2') -
+                            _bbox(det['bbox'], 1, 'y1'),
                       )
                   ],
-                  count: result['count'],
-                  processing_time_ms: result['processing_time_ms'],
+                  count: (result['count'] as num).toInt(),
+                  processing_time_ms:
+                      (result['processing_time_ms'] as num).toDouble(),
                   expert_advice:
-                      (result['expert_advice'] as Map<String, dynamic>)
-                          .entries
-                          .map((entry) {
-                    // entry.key is the disease name (e.g. 'rice_blast')
-                    // entry.value is the advice object
-                    var val = entry.value;
-                    return ExpertAdvice(
-                      diseaseName: entry.key,
-                      status:
-                          entry.key, // Using the key as the status/disease name
-                      severity: val['severity'] ?? 'unknown',
-                      treatment: val['treatment'] ?? 'Consult a specialist.',
-                      symptoms: (val['symptoms'] as List)
-                          .join(", "), // symptoms is a List in JSON
-                      source: val['source'] ?? 'AI Inference',
-                    );
-                  }).toList(),
-                  original_height: result['original_height'],
-                  original_width: result['original_width'],
+                      _parseExpertAdvice(result['expert_advice']),
+                  original_height: (result['original_height'] as num).toInt(),
+                  original_width: (result['original_width'] as num).toInt(),
                 );
 
-                await addInferenceResultToHistory(
+                // ── Phase 2: Firebase save ────────────────────────────────
+                // If this throws, it is an upload/network error, caught below.
+                recordId = await addInferenceResultToHistory(
                     llmResult, widget.editedImage);
-
+              } on Exception catch (inferenceError) {
+                // API / ML failure → Analysis Failed screen
                 setState(() => widget._isAnalyzing = false);
-                print("Diagnosis success: ${result['label']}");
-                // TODO: Navigate to results page
-              } catch (e) {
-                setState(() => widget._isAnalyzing = false);
-
-                // This catches the 'throw Exception' from 422, 429, or 500
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(e.toString().replaceAll("Exception: ", "")),
-                    backgroundColor: Colors.redAccent,
+                if (!context.mounted) return;
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AnalysisConfirmationScreen(
+                      state: ConfirmationState.analysisFailed,
+                      imageFile: widget.editedImage,
+                      errorMessage: inferenceError
+                          .toString()
+                          .replaceAll('Exception: ', ''),
+                    ),
                   ),
                 );
+                return;
               }
+
+              // ── Success: navigate to confirmation screen ──────────────
+              setState(() => widget._isAnalyzing = false);
+              if (!context.mounted) return;
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => AnalysisConfirmationScreen(
+                    state: ConfirmationState.success,
+                    imageFile: widget.editedImage,
+                    recordId: recordId,
+                    imageId: recordId, // nowId is used for both record & image
+                  ),
+                ),
+              );
             },
             icon: widget._isAnalyzing ? Icon(Icons.block) : Icon(Icons.biotech),
             label: Text(
@@ -333,45 +417,6 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
           ),
         ),
       ),
-    );
-  }
-}
-
-// ---------------- TOOL ITEM ----------------
-class _ToolItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Function? onTap;
-
-  const _ToolItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return IconButton(
-      icon: Column(
-        children: [
-          Icon(icon, color: Colors.white, size: 22),
-          SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-      onPressed: () {
-        if (onTap != null) {
-          onTap!();
-        }
-      },
-      tooltip: label,
     );
   }
 }

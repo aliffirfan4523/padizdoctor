@@ -1,8 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:padizdoctor/app.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/gallery.dart';
 import 'package:padizdoctor/features/homepage/services/homepage_service.dart';
 import 'package:padizdoctor/features/settings/services/settings_controller.dart';
+import 'package:padizdoctor/model/AppRoutes.dart';
 
 import '../../../core/widgets/Recent_Scans_List.dart';
 import '../../../core/widgets/reusable_header.dart';
@@ -130,10 +132,13 @@ class _HomepageScreensState extends State<HomepageScreens> {
               ],
             ),
             SizedBox(height: 20),*/
-            buildHeader(title: "Recent Scans"),
+            buildHeader(
+              title: "Recent Scans",
+              onViewAll: () => Navigator.pushNamed(context, AppRoutes.allScans),
+            ),
             // Shows only the 3 most recent scans
             //SizedBox(height: 10),
-            RecentScansList(userId: widget.user["user_id"], limit: 10),
+            RecentScansList(userId: widget.user["user_id"], limit: 3),
           ],
         ));
   }

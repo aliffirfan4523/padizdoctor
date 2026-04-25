@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/features/main_wrapper/app_navigation_view.dart';
+import 'package:padizdoctor/app.dart';
 import 'package:padizdoctor/features/auth/services/auth_service.dart';
-import 'package:padizdoctor/features/auth/screens/signup_screen.dart';
 import 'package:padizdoctor/core/utils/colors_utils.dart';
 import 'package:padizdoctor/core/widgets/reusable_text_field.dart';
 import 'package:padizdoctor/features/settings/services/settings_controller.dart';
+import 'package:padizdoctor/model/model.dart';
 
 import '../../../core/widgets/reusable_widget.dart';
 
@@ -86,13 +86,7 @@ class _SignInScreenState extends State<SignInScreen> {
                               password: _passwordTextController.text);
                       if (!mounted) return;
                       if (value.user != null) {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => MainNavigationView(
-                                controller: widget.controller),
-                          ),
-                        );
+                        Navigator.pushReplacementNamed(context, AppRoutes.home);
                       } else {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -181,11 +175,7 @@ class _SignInScreenState extends State<SignInScreen> {
             style: TextStyle(color: Colors.white70)),
         GestureDetector(
           onTap: () {
-            Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) =>
-                        SignUpScreen(context, controller: widget.controller)));
+            Navigator.pushNamed(context, AppRoutes.signup);
           },
           child: const Text(
             " Sign Up",

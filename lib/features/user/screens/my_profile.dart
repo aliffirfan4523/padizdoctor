@@ -2,11 +2,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/features/auth/services/auth_service.dart';
-import 'package:padizdoctor/features/auth/screens/change_password_page.dart';
 import 'package:padizdoctor/core/widgets/theme_toggle_button.dart';
 import 'package:padizdoctor/core/widgets/text_button.dart';
 import 'package:padizdoctor/features/settings/services/settings_controller.dart';
 import 'package:padizdoctor/features/user/services/user_service.dart';
+
+import '../../../model/model.dart';
 
 class MyProfile extends StatefulWidget {
   MyProfile({super.key, required this.controller, required this.user});
@@ -158,12 +159,7 @@ class _MyProfileState extends State<MyProfile> {
                   title: Text("Change Password"),
                   trailing: Icon(Icons.arrow_forward_ios),
                   onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ChangePasswordPage(),
-                      ),
-                    );
+                    Navigator.pushNamed(context, AppRoutes.changePassword);
                   },
                 ),
                 SizedBox(height: 10),
@@ -209,7 +205,7 @@ class _MyProfileState extends State<MyProfile> {
                 TextColorButton(Colors.red, "Log Out", () {
                   Navigator.of(context).pop();
                   AuthService.instance.signOut();
-                  Navigator.pushNamed(context, "/login");
+                  Navigator.pushNamed(context, AppRoutes.login);
                 }),
               ],
             ),

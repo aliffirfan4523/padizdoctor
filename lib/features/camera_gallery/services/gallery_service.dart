@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
@@ -52,28 +53,31 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
   final String extension = imageFile.extension ?? 'jpg';
   final request = http.MultipartRequest('POST', uri);
 
-  if (imageFile.path != null) {
-    request.files.add(
-      await http.MultipartFile.fromPath(
-        'file',
-        imageFile.path!,
-        // THIS IS THE KEY FIX:
-        contentType: http.MediaType('image', extension),
-      ),
-    );
-  } else if (imageFile.bytes != null) {
-    request.files.add(
-      http.MultipartFile.fromBytes(
-        'file',
-        imageFile.bytes!,
-        filename: imageFile.name,
-        // AND HERE FOR BYTES:
-        contentType: http.MediaType('image', extension),
-      ),
-    );
+  // Eagerly read bytes before building the request.
+  // MultipartFile.fromPath() opens the file lazily when the request is sent,
+  // which can fail if the file_picker cache file was evicted by Android.
+  final Uint8List imageBytes;
+  if (imageFile.bytes != null) {
+    imageBytes = imageFile.bytes!;
+  } else if (imageFile.path != null) {
+    final file = File(imageFile.path!);
+    if (!await file.exists()) {
+      throw Exception(
+          'Image file no longer exists at path: ${imageFile.path}. Try picking the image again.');
+    }
+    imageBytes = await file.readAsBytes();
   } else {
-    throw Exception("Invalid image file");
+    throw Exception('Invalid image file: no path or bytes available.');
   }
+
+  request.files.add(
+    http.MultipartFile.fromBytes(
+      'file',
+      imageBytes,
+      filename: imageFile.name,
+      contentType: http.MediaType('image', extension),
+    ),
+  );
 
   final streamedResponse = await request.send();
   final response = await http.Response.fromStream(streamedResponse);
@@ -122,139 +126,129 @@ Future<PlatformFile> pickPaddyImage() async {
   throw Exception('No file was picked');
 }
 
-Future<void> addInferenceResultToHistory(
+/// Saves inference results to Firestore and returns the [recordId] (nowId)
+/// so callers can navigate directly to the results screen.
+Future<String> addInferenceResultToHistory(
     LlmResult llmResult, PlatformFile imageFile) async {
   final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return;
+  if (user == null) return "";
+  try {
+    llmResult.detections.sort((a, b) => b.confidence.compareTo(a.confidence));
 
-  llmResult.detections.sort((a, b) => b.confidence.compareTo(a.confidence));
+    // When no disease is detected, detections is empty — use 'healthy' as label.
+    final String primaryDiseaseId = llmResult.detections.isEmpty
+        ? 'healthy'
+        : llmResult.detections.first.label;
 
-  final primaryDetection = llmResult.detections.first;
-  final String primaryDiseaseId = primaryDetection.label;
+    DocumentReference summaryRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('activitySummary')
+        .doc('stats'); // Using a fixed ID 'stats' makes it easy to update
 
-  DocumentReference summaryRef = FirebaseFirestore.instance
-      .collection('users')
-      .doc(user.uid)
-      .collection('activitySummary')
-      .doc('stats'); // Using a fixed ID 'stats' makes it easy to update
+    String fileName = await uploadInferenceImage(imageFile, primaryDiseaseId);
 
-  String fileName = await uploadInferenceImage(imageFile, primaryDiseaseId);
+    final String nowId = DateTime.now().millisecondsSinceEpoch.toString();
+    final Timestamp nowTs = Timestamp.now();
 
-  final String nowId = DateTime.now().millisecondsSinceEpoch.toString();
-  final Timestamp nowTs = Timestamp.now();
+    // Reference the sub-models you defined in your screenshot
+    final batch = FirebaseFirestore.instance.batch();
 
-  // Reference the sub-models you defined in your screenshot
-  final batch = FirebaseFirestore.instance.batch();
+    ImageFile img = ImageFile(
+      id: nowId,
+      file_name: fileName,
+      format: imageFile.extension ?? 'jpg',
+      size_mb: (imageFile.size / (1024 * 1024)).toDouble(),
+      uploaded_at: Timestamp.now(),
+      width: llmResult.original_width,
+      height: llmResult.original_height,
+    );
+    DiagnosisRecord record = DiagnosisRecord(
+      id: nowId,
+      image_id: img.id,
+      timestamp: nowTs,
+      user_id: user!.uid, // Replace with actual user ID
+    );
 
-  ImageFile img = ImageFile(
-    id: nowId,
-    file_name: fileName,
-    format: imageFile.extension ?? 'jpg',
-    size_mb: (imageFile.size / (1024 * 1024)).toDouble(),
-    uploaded_at: Timestamp.now(),
-    width: llmResult.original_width,
-    height: llmResult.original_height,
-  );
-  DiagnosisRecord record = DiagnosisRecord(
-    id: nowId,
-    image_id: img.id,
-    timestamp: nowTs,
-    user_id: user!.uid, // Replace with actual user ID
-  );
+    print("--- STARTING DEEP DEBUG ---");
+    print(
+        "ADVICE LIST: ${llmResult.expert_advice.map((e) => e.diseaseName).toList()}");
+    print(
+        "YOLO LABELS FOUND: ${llmResult.detections.map((d) => d.label).toList()}");
 
-  print("--- STARTING DEEP DEBUG ---");
-  print(
-      "ADVICE LIST: ${llmResult.expert_advice.map((e) => e.diseaseName).toList()}");
-  print(
-      "YOLO LABELS FOUND: ${llmResult.detections.map((d) => d.label).toList()}");
+    for (var advice in llmResult.expert_advice) {
+      String subId = "${nowId}_${advice.status}";
 
-  for (var advice in llmResult.expert_advice) {
-    // Generate a unique ID for this specific finding
-    print("Attempting match for: ${advice.diseaseName}");
-    String subId = "${nowId}_${advice.status}";
+      // For healthy results, detections is empty so specificBoxes will be [].
+      List<BoundingBoxes> specificBoxes = llmResult.detections.where((box) {
+        return box.label.toLowerCase().replaceAll('_', '') ==
+            advice.diseaseName.toLowerCase().replaceAll('_', '');
+      }).toList();
 
-    List<BoundingBoxes> specificBoxes = llmResult.detections.where((box) {
-      // Use the 'fuzzy match' to be safe
-      return box.label.toLowerCase().replaceAll('_', '') ==
-          advice.diseaseName.toLowerCase().replaceAll('_', '');
-    }).toList();
+      final bestDet = llmResult.detections.isEmpty
+          ? null
+          : llmResult.detections.firstWhere(
+              (d) => d.label == advice.diseaseName,
+              orElse: () => llmResult.detections.first,
+            );
 
-    // --- THE TEST PRINT ---
-    print("TESTING JSON FOR: ${advice.diseaseName}");
-    print(specificBoxes.map((e) => e.toJson()).toList());
-    if (specificBoxes.isEmpty) {
-      print(
-          "❌ ERROR: specificBoxes is empty for ${advice.diseaseName}. Check your .where() condition!");
-    } else {
-      print(
-          "✅ SUCCESS: Found ${specificBoxes.length} boxes for ${advice.diseaseName}.");
+      DiagnosisResult result = DiagnosisResult(
+        id: subId,
+        record_id: record.id,
+        disease_id: advice.diseaseName, // 'healthy' for healthy scans
+        confidence_score: advice.diseaseName == 'healthy'
+            ? 1.0
+            : (bestDet?.confidence ?? 0.0),
+        severity: advice.severity,
+        bounding_boxes: specificBoxes,
+      );
+
+      TreatmentSuggestion suggestion = TreatmentSuggestion(
+        id: subId,
+        record_id: record.id,
+        source: advice.source,
+        text: advice.treatment,
+        type: 'LLM_ANALYSIS',
+      );
+
+      batch.set(
+          FirebaseFirestore.instance.collection('DiagnosisResult').doc(subId),
+          result.toJson());
+      batch.set(
+          FirebaseFirestore.instance
+              .collection('TreatmentSuggestion')
+              .doc(subId),
+          suggestion.toJson());
     }
-// ----------------------
 
-    // Find the best detection for this specific disease to get confidence
-    final bestDet = llmResult.detections.firstWhere(
-      (d) => d.label == advice.diseaseName,
-      orElse: () => llmResult.detections.first,
-    );
-
-    /*DocumentSnapshot diseaseDoc = await FirebaseFirestore.instance
-      .collection('Disease')
-      .doc(bestDet.label)
-      .get();
-    */
-    // Create DiagnosisResult using your class
-    DiagnosisResult result = DiagnosisResult(
-      id: subId,
-      record_id: record.id, // IMPORTANT: Link back to the main record
-      disease_id:
-          advice.diseaseName, // Assuming label corresponds to disease_id
-      confidence_score: bestDet.confidence,
-      severity: advice.severity,
-      bounding_boxes: specificBoxes,
-    );
-
-    // Create TreatmentSuggestion using your class
-    TreatmentSuggestion suggestion = TreatmentSuggestion(
-      id: subId,
-      record_id: record.id,
-      source: advice.source,
-      text: advice.treatment,
-      type: 'LLM_ANALYSIS',
-    );
-
-    // Add to batch using .toJson()
     batch.set(
-        FirebaseFirestore.instance.collection('DiagnosisResult').doc(subId),
-        result.toJson());
+      FirebaseFirestore.instance.collection('ImageFile').doc(nowId),
+      img.toJson(), // Direct passing
+    );
     batch.set(
-        FirebaseFirestore.instance.collection('TreatmentSuggestion').doc(subId),
-        suggestion.toJson());
+      FirebaseFirestore.instance.collection('DiagnosisRecord').doc(nowId),
+      record.toJson(), // Direct passing
+    );
+
+    batch.set(
+        summaryRef,
+        {
+          'totalSubmissions': FieldValue.increment(1),
+          'lastUpdated': Timestamp.now(),
+          'userId': user.uid,
+          // Optional: If you want to track total time to calculate average later
+          'totalProcessingTime':
+              FieldValue.increment(llmResult.processing_time_ms ?? 0),
+        },
+        SetOptions(merge: true));
+
+    await batch.commit();
+    print("Saving inference result to history — recordId: $nowId");
+    return nowId;
+  } catch (e) {
+    print("Firebase Write Error: $e");
+    throw Exception("Failed to save inference result: $e");
   }
-
-  batch.set(
-    FirebaseFirestore.instance.collection('ImageFile').doc(nowId),
-    img.toJson(), // Direct passing
-  );
-  batch.set(
-    FirebaseFirestore.instance.collection('DiagnosisRecord').doc(nowId),
-    record.toJson(), // Direct passing
-  );
-
-  batch.set(
-      summaryRef,
-      {
-        'totalSubmissions': FieldValue.increment(1),
-        'lastUpdated': Timestamp.now(),
-        'userId': user.uid,
-        // Optional: If you want to track total time to calculate average later
-        'totalProcessingTime':
-            FieldValue.increment(llmResult.processing_time_ms ?? 0),
-      },
-      SetOptions(merge: true));
-
-  await batch.commit();
-
-  print("Saving inference result to history: $llmResult");
 }
 
 Future<String> uploadInferenceImage(
@@ -263,21 +257,34 @@ Future<String> uploadInferenceImage(
     final user = FirebaseAuth.instance.currentUser;
     // 1. Create a unique filename
     String fileName =
-        '${DateTime.now().millisecondsSinceEpoch}_$diseaseLabel.jpg';
+        '${user!.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg';
 
     // 2. Point to your storage location
-    Reference storageRef = FirebaseStorage.instance.ref().child(
-        'diagnosis_images/${user!.uid}/${DateTime.now().millisecondsSinceEpoch}.jpg');
+    Reference storageRef =
+        FirebaseStorage.instance.ref().child('diagnosis_images/$fileName');
 
     // 3. Handle both Web (bytes) and Mobile (path)
     UploadTask uploadTask;
     final metadata = SettableMetadata(contentType: 'image/jpeg');
 
-    if (imageFile.path != null) {
-      uploadTask = storageRef.putFile(File(imageFile.path!), metadata);
+    // Always use putData() to avoid PathNotFound errors.
+    // file_picker caches files in a temp dir that Android can evict by the
+    // time Firebase tries to stat the file. Reading bytes eagerly prevents
+    // the race condition, regardless of whether we have a path or raw bytes.
+    final Uint8List imageBytes;
+    if (imageFile.bytes != null) {
+      imageBytes = imageFile.bytes!;
+    } else if (imageFile.path != null) {
+      final file = File(imageFile.path!);
+      if (!await file.exists()) {
+        throw Exception(
+            'Image file no longer exists at path: ${imageFile.path}');
+      }
+      imageBytes = await file.readAsBytes();
     } else {
-      uploadTask = storageRef.putData(imageFile.bytes!, metadata);
+      throw Exception('No image data available (path and bytes are both null)');
     }
+    uploadTask = storageRef.putData(imageBytes, metadata);
 
     // 4. Wait for completion and get the URL
     TaskSnapshot snapshot = await uploadTask;

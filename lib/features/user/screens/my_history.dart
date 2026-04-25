@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/core/widgets/Recent_Scans_List.dart';
+import 'package:padizdoctor/model/model.dart';
 
 import '../../../core/widgets/reusable_header.dart';
 
@@ -30,9 +31,14 @@ class _MyHistoryState extends State<MyHistory> {
             const SizedBox(height: 24),
 
             // 2. Recent Scans List (Dynamic)
-            buildHeader(title: "Recent Scans"),
+            buildHeader(
+              title: "Recent Scans",
+              onViewAll: () => Navigator.pushNamed(context, AppRoutes.allScans),
+            ),
             SizedBox(height: 20),
-            RecentScansList(userId: widget.currentUserId, limit: 3)
+            RecentScansList(
+              userId: widget.currentUserId,
+            )
           ],
         ),
       ),

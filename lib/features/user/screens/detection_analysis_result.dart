@@ -140,8 +140,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                       indicatorColor: Colors.green,
                       tabs: resultsList.map((res) {
                         final result = Map<String, dynamic>.from(res);
-                        final disease = Map<String, dynamic>.from(
-                            diseasesMap[result['disease_id']] ?? {});
+                        final disease = _resolveDisease(result['disease_id'], diseasesMap);
                         return Tab(
                           text: disease['disease_name'] ?? 'Unknown',
                         );
@@ -153,8 +152,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
               body: TabBarView(
                 children: resultsList.map((res) {
                   final result = Map<String, dynamic>.from(res);
-                  final disease = Map<String, dynamic>.from(
-                      diseasesMap[result['disease_id']] ?? {});
+                  final disease = _resolveDisease(result['disease_id'], diseasesMap);
                   final resultId = result['id'];
                   final diseaseSuggestions = allSuggestions
                       .where((sug) => sug['id'] == resultId)
@@ -194,11 +192,29 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
     );
   }
 
+  /// Returns a resolved disease map. When [diseaseId] is 'healthy' or not
+  /// found in [diseasesMap], a friendly synthetic map is returned so the
+  /// UI never shows 'Unknown Disease' for a healthy scan.
+  static Map<String, dynamic> _resolveDisease(
+      String? diseaseId, Map<String, dynamic> diseasesMap) {
+    if (diseaseId == 'healthy' || diseaseId == null) {
+      return {
+        'disease_name': 'Healthy Crop',
+        'description': 'No diseases were detected in this scan. '
+            'Your paddy crop appears to be in good health.',
+      };
+    }
+    final found = diseasesMap[diseaseId];
+    if (found != null) return Map<String, dynamic>.from(found);
+    // Unknown disease ID — return a generic fallback.
+    return {'disease_name': diseaseId, 'description': 'No details available.'};
+  }
+
   Widget _buildDiseaseDetails(
       Map<String, dynamic> result, Map<String, dynamic> disease) {
-    final String name = disease['disease_name'] ?? 'Unknown Disease';
-    final String severity = result['severity'] ?? 'Unknown';
-    final double confidence = result['confidence_score'] ?? 0.0;
+    final String name = disease['disease_name'] ?? 'Healthy Crop';
+    final String severity = result['severity'] ?? 'None';
+    final double confidence = (result['confidence_score'] as num?)?.toDouble() ?? 0.0;
     final String description =
         disease['description'] ?? 'No description available.';
 
@@ -209,7 +225,10 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
         const SizedBox(height: 16),
         buildConfidenceScore(confidence),
         const SizedBox(height: 24),
-        buildInfoSection("About the Disease", description),
+        buildInfoSection(
+          name == 'Healthy Crop' ? 'Crop Health Status' : 'About the Disease',
+          description,
+        ),
       ],
     );
   }

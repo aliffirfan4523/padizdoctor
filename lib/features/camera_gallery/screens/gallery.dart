@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/image_preview.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/upload_loading.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import '../services/gallery_service.dart';
 
@@ -237,33 +239,51 @@ class _GalleryPickerState extends State<GalleryPicker> {
 
   Future<void> _runImageQualityCheck(PlatformFile result) async {
     try {
-      // 2. Call API
-      //final blurResult = await checkImageBlur(result);
+      // Copy the file to the app's own temp directory immediately.
+      // file_picker and the camera both store files in temp/cache paths that
+      // Android can evict at any time. By copying here — once, right after
+      // picking — every downstream operation (display, crop, inference, upload)
+      // always has a stable, app-owned file.
+      final stableFile = await _copyToStablePath(result);
 
-      // 3. Remove loading screen
-      //Navigator.pop(context);
-
-      // 4. Go to review page
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => ReviewCapturePage(
-            originalImage: result,
-            editedImage: result,
-            //status: !(blurResult['is_blurry'] as bool),
-            //blurScore: blurResult['blur_score'],
+            originalImage: stableFile,
+            editedImage: stableFile,
           ),
         ),
       );
     } catch (e) {
-      Navigator.pop(context); // Ensure loading is dismissed
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Failed to check image quality")),
+        SnackBar(content: Text("Failed to prepare image: $e")),
       );
     }
   }
+
+  /// Copies [file] to the app's temporary directory and returns a new
+  /// [PlatformFile] pointing to the stable copy.
+  Future<PlatformFile> _copyToStablePath(PlatformFile file) async {
+    if (file.path == null) return file; // bytes-only (web), nothing to copy
+
+    final srcFile = File(file.path!);
+    final tmpDir = await getTemporaryDirectory();
+    final ext = p.extension(file.path!).isEmpty ? '.jpg' : p.extension(file.path!);
+    final destPath = p.join(
+      tmpDir.path,
+      'padiz_${DateTime.now().millisecondsSinceEpoch}$ext',
+    );
+    final copied = await srcFile.copy(destPath);
+    return PlatformFile(
+      name: file.name,
+      path: copied.path,
+      size: await copied.length(),
+      bytes: file.bytes,
+    );
+  }
 }
+
 
 class ScannerFramePainter extends CustomPainter {
   @override

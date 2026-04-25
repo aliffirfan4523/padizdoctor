@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../screens/detection_analysis_result.dart';
+import 'package:padizdoctor/app.dart';
+
+import '../../../model/model.dart';
 
 class ScanCard extends StatelessWidget {
   final String title, subtitle, detail, time;
@@ -30,13 +32,15 @@ class ScanCard extends StatelessWidget {
     return InkWell(
       onTap: () {
         // Handle card tap if needed
-        Navigator.push(context, MaterialPageRoute(builder: (_) {
-          return AnalysisResultsScreen(
+        Navigator.pushNamed(
+          context,
+          AppRoutes.analysisResult,
+          arguments: AnalysisResultsArgs(
             recordId: recordId,
             imageId: imageId,
-            userId: userId, // Pass userId if needed
-          );
-        }));
+            userId: userId,
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(12),

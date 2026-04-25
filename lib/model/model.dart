@@ -6,3 +6,6 @@ export 'image_file.dart';
 export 'treatment_suggestion.dart';
 export 'users.dart';
 export 'llm_result.dart';
+export 'AnalysisResultsArgs.dart';
+export 'AppRoutes.dart';
+export 'AnalysisConfirmationArgs.dart';
