@@ -35,6 +35,18 @@ class RecentScansList extends StatelessWidget {
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: ScanService.getDetailedScans(userId),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Unable to load recent scans. Please check your connection.",
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }

@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:padizdoctor/core/utils/bounding_box.dart';
 
 import '../../../model/model.dart';
@@ -72,6 +74,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
           final List<dynamic> resultsList = data['results'];
           final Map<String, dynamic> diseasesMap = data['diseases'];
           final image = data['image'];
+          final record = data['record'];
           final List<dynamic> allSuggestions = data['suggestions'];
 
           // 1. Aggregate ALL bounding boxes from ALL results
@@ -107,7 +110,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 10),
                         Builder(builder: (context) {
                           final tabController =
                               DefaultTabController.of(context);
@@ -125,7 +128,40 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                             },
                           );
                         }),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 20),
+                        Builder(builder: (context) {
+                          DateTime scanDate = DateTime.now();
+                          if (record != null && record['timestamp'] != null) {
+                            if (record['timestamp'] is Timestamp) {
+                              scanDate =
+                                  (record['timestamp'] as Timestamp).toDate();
+                            } else if (record['timestamp'] is String) {
+                              scanDate =
+                                  DateTime.tryParse(record['timestamp']) ??
+                                      DateTime.now();
+                            }
+                          }
+                          final dateStr = DateFormat('MMM dd, yyyy • hh:mm a')
+                              .format(scanDate);
+
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 16.0),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.access_time,
+                                    size: 16, color: Colors.grey),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "Scanned on $dateStr",
+                                  style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ),

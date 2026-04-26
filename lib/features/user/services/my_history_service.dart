@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -14,7 +15,13 @@ class CombinedScan {
 
 class ScanService {
   static Stream<List<Map<String, dynamic>>> getDetailedScans(String userId) {
-    return FirebaseFirestore.instance
+    // Gate behind auth state — when the user signs out the stream
+    // emits [] and stops all nested Firestore listeners, preventing
+    // PERMISSION_DENIED errors from orphaned queries.
+    return FirebaseAuth.instance.authStateChanges().switchMap((user) {
+      if (user == null) return Stream.value([]);
+
+      return FirebaseFirestore.instance
         .collection('DiagnosisRecord')
         .where('user_id', isEqualTo: userId)
         .orderBy('timestamp', descending: true)
@@ -70,6 +77,7 @@ class ScanService {
       }).toList();
       return CombineLatestStream.list(streams);
     });
+    }); // end authStateChanges switchMap
   }
 }
 
@@ -91,9 +99,11 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
 
     final resultsList = resultSnap.docs.map((doc) => doc.data()).toList();
 
-    // 2. Fetch the image document
+    // 2. Fetch the image document & record document
     final imageDoc = await db.collection('ImageFile').doc(imageId).get();
     if (!imageDoc.exists) throw "Image document not found";
+
+    final recordDoc = await db.collection('DiagnosisRecord').doc(recordId).get();
 
     // 3. Fetch unique diseases found in results
     final diseaseIds =
@@ -116,6 +126,7 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
     return <String, dynamic>{
       'results': resultsList,
       'image': imageDoc.data(),
+      'record': recordDoc.data(),
       'diseases': diseasesMap,
       'suggestions': suggestionSnap.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;

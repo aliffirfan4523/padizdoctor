@@ -74,6 +74,55 @@ class AuthService {
     }
   }
 
+  /// Whether the current user signed in with Google only (no email/password linked)
+  bool get isGoogleOnly {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+    final providerIds = user.providerData.map((p) => p.providerId).toSet();
+    return providerIds.contains('google.com') && !providerIds.contains('password');
+  }
+
+  /// Link an email/password credential to the current Google-only user
+  /// so they can also sign in with email + password.
+  Future<String> linkEmailPassword(String password) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return 'No user signed in.';
+      if (user.email == null) return 'No email associated with this account.';
+
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: password,
+      );
+      await user.linkWithCredential(credential);
+      return 'success';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'provider-already-linked') {
+        return 'Email/password is already linked to this account.';
+      } else if (e.code == 'weak-password') {
+        return 'Password is too weak. Use at least 6 characters.';
+      }
+      return e.message ?? 'Failed to link account.';
+    } catch (e) {
+      return 'An unexpected error occurred: $e';
+    }
+  }
+
+  /// Send a password-reset email via Firebase Auth.
+  Future<String> sendPasswordReset(String email) async {
+    try {
+      await _auth.sendPasswordResetEmail(email: email.trim());
+      return 'success';
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        return 'No account found with that email.';
+      }
+      return e.message ?? 'Failed to send reset email.';
+    } catch (e) {
+      return 'An unexpected error occurred: $e';
+    }
+  }
+
   Future<void> signOut() async {
     await GoogleSignIn.instance.signOut();
     await _auth.signOut();

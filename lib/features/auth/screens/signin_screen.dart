@@ -115,8 +115,24 @@ class _SignInScreenState extends State<SignInScreen> {
                   },
                   buttonColor: Colors.white,
                   textColor: hexStringToColor("3E8E41"),
-                  borderRadius: 16,
+                  borderRadius: 12,
                 ),
+
+                // Forgot Password
+                Align(
+                  alignment: Alignment.center,
+                  child: GestureDetector(
+                    onTap: () => _showForgotPasswordDialog(),
+                    child: const Text(
+                      "Forgot Password?",
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 20),
 
                 // Sign Up option
@@ -183,6 +199,64 @@ class _SignInScreenState extends State<SignInScreen> {
           ),
         )
       ],
+    );
+  }
+
+  void _showForgotPasswordDialog() {
+    final resetEmailController =
+        TextEditingController(text: _emailTextController.text);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Reset Password"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Enter your email address and we'll send you a link to reset your password.",
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: resetEmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: "Email",
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final email = resetEmailController.text.trim();
+              if (email.isEmpty) return;
+              Navigator.pop(ctx);
+
+              final result =
+                  await AuthService.instance.sendPasswordReset(email);
+
+              if (!mounted) return;
+              if (result == 'success') {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                      content: Text("Password reset email sent to $email")),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(result)),
+                );
+              }
+            },
+            child: const Text("Send"),
+          ),
+        ],
+      ),
     );
   }
 }

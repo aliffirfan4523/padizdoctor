@@ -45,6 +45,9 @@ class _MainNavigationViewState extends State<MainNavigationView> {
         };
         _loading = false;
       });
+    }, onError: (error) {
+      // Silently handle permission errors during sign-out
+      _userSub?.cancel();
     });
   }
 

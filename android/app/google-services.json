@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "533916619628-89tfqjkbie8tvon6faf3s9trh7d90sos.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.padizdoctor",
+            "certificate_hash": "822a2a69191629647d1c30ee4aa5fd747c625418"
+          }
+        },
+        {
           "client_id": "533916619628-k0fb6j78l27434b84m79o0nq308f2uji.apps.googleusercontent.com",
           "client_type": 3
         }
