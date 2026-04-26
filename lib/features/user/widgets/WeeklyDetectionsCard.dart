@@ -128,61 +128,9 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
           const SizedBox(height: 24),
           AspectRatio(
             aspectRatio: 1.8,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: (isWeeklyView
-                            ? data.weeklyDetections
-                            : data.monthlyDetections)
-                        .reduce((a, b) => a > b ? a : b)
-                        .toDouble() +
-                    2,
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (isWeeklyView) {
-                          const days = [
-                            'Mon',
-                            'Tue',
-                            'Wed',
-                            'Thu',
-                            'Fri',
-                            'Sat',
-                            'Sun'
-                          ];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              days[value.toInt()],
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
-                            ),
-                          );
-                        } else {
-                          const weeks = ['W1', 'W2', 'W3', 'W4'];
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              weeks[value.toInt()],
-                              style: const TextStyle(
-                                  color: Colors.grey, fontSize: 12),
-                            ),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                  leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: false)),
-                ),
+            child: LineChart(
+              LineChartData(
+                lineTouchData: LineTouchData(enabled: true),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
@@ -192,25 +140,70 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                     strokeWidth: 1,
                   ),
                 ),
-                borderData: FlBorderData(show: false),
-                barGroups: List.generate(
-                  isWeeklyView ? 7 : 4,
-                  (i) => BarChartGroupData(
-                    x: i,
-                    barRods: [
-                      BarChartRodData(
-                        toY: (isWeeklyView
-                                ? data.weeklyDetections[i]
-                                : data.monthlyDetections[i])
-                            .toDouble(),
-                        color: Colors.green.shade300,
-                        width: 16,
-                        borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(4)),
-                      )
-                    ],
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 22,
+                      interval: 1,
+                      getTitlesWidget: (value, meta) {
+                        if (isWeeklyView) {
+                          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                          if (value < 0 || value >= days.length) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              days[value.toInt()],
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          );
+                        } else {
+                          const weeks = ['W1', 'W2', 'W3', 'W4'];
+                          if (value < 0 || value >= weeks.length) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8.0),
+                            child: Text(
+                              weeks[value.toInt()],
+                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                            ),
+                          );
+                        }
+                      },
+                    ),
                   ),
+                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: isWeeklyView ? 6 : 3,
+                minY: 0,
+                maxY: (isWeeklyView ? data.weeklyDetections : data.monthlyDetections)
+                        .reduce((a, b) => a > b ? a : b)
+                        .toDouble() +
+                    2,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: List.generate(
+                      isWeeklyView ? 7 : 4,
+                      (i) => FlSpot(
+                        i.toDouble(),
+                        (isWeeklyView ? data.weeklyDetections[i] : data.monthlyDetections[i]).toDouble(),
+                      ),
+                    ),
+                    isCurved: true,
+                    color: Colors.green.shade400,
+                    barWidth: 4,
+                    isStrokeCapRound: true,
+                    dotData: FlDotData(show: true),
+                    belowBarData: BarAreaData(
+                      show: true,
+                      color: Colors.green.shade400.withOpacity(0.2),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

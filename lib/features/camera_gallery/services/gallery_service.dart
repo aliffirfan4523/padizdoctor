@@ -53,6 +53,12 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
   final String extension = imageFile.extension ?? 'jpg';
   final request = http.MultipartRequest('POST', uri);
 
+  // Add user_id for backend LLM logging (TC-TPS-006)
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    request.fields['user_id'] = user.uid;
+  }
+
   // Eagerly read bytes before building the request.
   // MultipartFile.fromPath() opens the file lazily when the request is sent,
   // which can fail if the file_picker cache file was evicted by Android.

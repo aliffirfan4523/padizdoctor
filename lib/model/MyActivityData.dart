@@ -8,6 +8,7 @@ class ActivityData {
   final Map<String, int> diseaseDistribution;
   final Map<DateTime, int> scansByDate;
   final int totalScans;
+  final String avgTimeStr;
 
   ActivityData({
     required this.healthyCount,
@@ -19,5 +20,6 @@ class ActivityData {
     required this.diseaseDistribution,
     required this.scansByDate,
     required this.totalScans,
+    required this.avgTimeStr,
   });
 }

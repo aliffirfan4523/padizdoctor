@@ -27,7 +27,7 @@ class _MyActivityState extends State<MyActivity> {
     Colors.purpleAccent,
   ];
 
-  ActivityData _processData(List<Map<String, dynamic>> scans) {
+  ActivityData _processData(List<Map<String, dynamic>> scans, DocumentSnapshot? statsDoc) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -97,6 +97,18 @@ class _MyActivityState extends State<MyActivity> {
       return ((current - previous) / previous) * 100;
     }
 
+    String avgTimeStr = "0.0s";
+    if (statsDoc != null && statsDoc.exists) {
+      final statsMap = statsDoc.data() as Map<String, dynamic>?;
+      if (statsMap != null) {
+        final totalMs = (statsMap['totalProcessingTime'] as num?)?.toDouble() ?? 0.0;
+        final totalSubs = (statsMap['totalSubmissions'] as num?)?.toDouble() ?? 0.0;
+        if (totalSubs > 0) {
+          avgTimeStr = (totalMs / totalSubs / 1000.0).toStringAsFixed(1) + "s";
+        }
+      }
+    }
+
     return ActivityData(
       healthyCount: healthyCount,
       alertsCount: alertsCount,
@@ -107,6 +119,7 @@ class _MyActivityState extends State<MyActivity> {
       diseaseDistribution: distribution,
       scansByDate: scansByDate,
       totalScans: scans.length,
+      avgTimeStr: avgTimeStr,
     );
   }
 
@@ -122,30 +135,36 @@ class _MyActivityState extends State<MyActivity> {
         child: const Icon(Icons.download_rounded, color: Colors.black87),
       ),
       body: SafeArea(
-        child: StreamBuilder<List<Map<String, dynamic>>>(
-          stream: ScanService.getDetailedScans(userId),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            }
+        child: StreamBuilder<DocumentSnapshot>(
+          stream: FirebaseFirestore.instance.collection('users').doc(userId).collection('activitySummary').doc('stats').snapshots(),
+          builder: (context, statsSnapshot) {
+            final statsDoc = statsSnapshot.data;
+            return StreamBuilder<List<Map<String, dynamic>>>(
+              stream: ScanService.getDetailedScans(userId),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-            final scans = snapshot.data ?? [];
-            final data = _processData(scans);
+                final scans = snapshot.data ?? [];
+                final data = _processData(scans, statsDoc);
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(context, data),
-                  const SizedBox(height: 24),
-                  _buildTopStatCards(data),
-                  const SizedBox(height: 16),
-                  WeeklyDetectionsCard(data: data),
-                  const SizedBox(height: 16),
-                  _buildDiseaseDistributionCard(data),
-                ],
-              ),
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildHeader(context, data),
+                      const SizedBox(height: 24),
+                      _buildTopStatCards(data),
+                      const SizedBox(height: 16),
+                      WeeklyDetectionsCard(data: data),
+                      const SizedBox(height: 16),
+                      _buildDiseaseDistributionCard(data),
+                    ],
+                  ),
+                );
+              },
             );
           },
         ),
@@ -278,22 +297,34 @@ class _MyActivityState extends State<MyActivity> {
         Expanded(
           child: _statCard(
             title: "HEALTHY",
-            count: data.healthyCount,
+            countStr: NumberFormat.decimalPattern().format(data.healthyCount),
             trend: data.healthyTrend,
             icon: Icons.check_circle,
             color: Colors.green,
             bgColor: Colors.green.withOpacity(0.1),
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: 8),
         Expanded(
           child: _statCard(
             title: "ALERTS",
-            count: data.alertsCount,
+            countStr: NumberFormat.decimalPattern().format(data.alertsCount),
             trend: data.alertsTrend,
             icon: Icons.warning_rounded,
             color: Colors.redAccent,
             bgColor: Colors.redAccent.withOpacity(0.1),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _statCard(
+            title: "AVG TIME",
+            countStr: data.avgTimeStr,
+            trend: 0,
+            icon: Icons.timer,
+            color: Colors.blueAccent,
+            bgColor: Colors.blueAccent.withOpacity(0.1),
+            showTrend: false,
           ),
         ),
       ],
@@ -302,17 +333,18 @@ class _MyActivityState extends State<MyActivity> {
 
   Widget _statCard({
     required String title,
-    required int count,
+    required String countStr,
     required double trend,
     required IconData icon,
     required Color color,
     required Color bgColor,
+    bool showTrend = true,
   }) {
     final isPositive = trend >= 0;
     final trendStr = '${isPositive ? '+' : ''}${trend.toStringAsFixed(0)}%';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -355,39 +387,40 @@ class _MyActivityState extends State<MyActivity> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                NumberFormat.decimalPattern().format(count),
+                countStr,
                 style: const TextStyle(
-                  fontSize: 28,
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isPositive
-                      ? Colors.green.withOpacity(0.15)
-                      : Colors.red.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isPositive ? Icons.trending_up : Icons.trending_down,
-                      color: isPositive ? Colors.green : Colors.red,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      trendStr,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+              if (showTrend)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: isPositive
+                        ? Colors.green.withOpacity(0.15)
+                        : Colors.red.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        isPositive ? Icons.trending_up : Icons.trending_down,
                         color: isPositive ? Colors.green : Colors.red,
+                        size: 14,
                       ),
-                    ),
-                  ],
-                ),
-              )
+                      const SizedBox(width: 2),
+                      Text(
+                        trendStr,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: isPositive ? Colors.green : Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
             ],
           )
         ],
