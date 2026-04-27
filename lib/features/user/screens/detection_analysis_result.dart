@@ -144,20 +144,61 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                           final dateStr = DateFormat('MMM dd, yyyy • hh:mm a')
                               .format(scanDate);
 
+                          // Build location string from record data
+                          String? locationText;
+                          if (record != null) {
+                            if (record['location_name'] != null) {
+                              locationText = record['location_name'];
+                            } else if (record['latitude'] != null &&
+                                record['longitude'] != null) {
+                              final lat = (record['latitude'] as num).toDouble();
+                              final lng = (record['longitude'] as num).toDouble();
+                              locationText =
+                                  '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
+                            }
+                          }
+
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 16.0),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Icon(Icons.access_time,
-                                    size: 16, color: Colors.grey),
-                                const SizedBox(width: 8),
-                                Text(
-                                  "Scanned on $dateStr",
-                                  style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500),
+                                Row(
+                                  children: [
+                                    const Icon(Icons.access_time,
+                                        size: 16, color: Colors.grey),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      "Scanned on $dateStr",
+                                      style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
                                 ),
+                                if (locationText != null) ...[
+                                  const SizedBox(height: 6),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.location_on_outlined,
+                                          size: 16,
+                                          color: Colors.green.shade400),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          locationText,
+                                          style: TextStyle(
+                                            color: Colors.green.shade400,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           );

@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:padizdoctor/features/user/widgets/WeeklyDetectionsCard.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:padizdoctor/features/user/services/my_history_service.dart';
@@ -44,6 +46,7 @@ class _MyActivityState extends State<MyActivity> {
     List<int> monthlyDetections = List.filled(4, 0); // Week 1 to Week 4
     Map<String, int> distribution = {};
     Map<DateTime, int> scansByDate = {};
+    List<ScanLocation> scanLocations = [];
 
     for (var scan in scans) {
       final timestamp = scan['record']['timestamp'] as Timestamp?;
@@ -68,6 +71,18 @@ class _MyActivityState extends State<MyActivity> {
 
       distribution[diseaseName] = (distribution[diseaseName] ?? 0) + 1;
       scansByDate[scanDay] = (scansByDate[scanDay] ?? 0) + 1;
+
+      // Extract location data if available
+      final lat = scan['record']['latitude'] as num?;
+      final lng = scan['record']['longitude'] as num?;
+      if (lat != null && lng != null) {
+        scanLocations.add(ScanLocation(
+          latitude: lat.toDouble(),
+          longitude: lng.toDouble(),
+          name: scan['record']['location_name'] as String?,
+          date: date,
+        ));
+      }
 
       // Trend calculations
       if (diffDays >= 0 && diffDays < 7) {
@@ -120,6 +135,7 @@ class _MyActivityState extends State<MyActivity> {
       scansByDate: scansByDate,
       totalScans: scans.length,
       avgTimeStr: avgTimeStr,
+      scanLocations: scanLocations,
     );
   }
 
@@ -161,6 +177,10 @@ class _MyActivityState extends State<MyActivity> {
                       WeeklyDetectionsCard(data: data),
                       const SizedBox(height: 16),
                       _buildDiseaseDistributionCard(data),
+                      if (data.scanLocations.isNotEmpty) ...[
+                        const SizedBox(height: 16),
+                        _buildScanLocationsMapCard(data),
+                      ],
                     ],
                   ),
                 );
@@ -568,6 +588,250 @@ class _MyActivityState extends State<MyActivity> {
               ),
             ],
           )
+        ],
+      ),
+    );
+  }
+
+  // ── Scan Locations Map Card ──────────────────────────────────────────────
+  Widget _buildScanLocationsMapCard(ActivityData data) {
+    // Calculate map center from all scan locations
+    double avgLat = 0, avgLng = 0;
+    for (var loc in data.scanLocations) {
+      avgLat += loc.latitude;
+      avgLng += loc.longitude;
+    }
+    avgLat /= data.scanLocations.length;
+    avgLng /= data.scanLocations.length;
+
+    // Group scans by approximate location for cluster counts
+    final Map<String, List<ScanLocation>> clusters = {};
+    for (var loc in data.scanLocations) {
+      // Round to ~100m precision for clustering
+      final key = '${loc.latitude.toStringAsFixed(3)},${loc.longitude.toStringAsFixed(3)}';
+      clusters.putIfAbsent(key, () => []).add(loc);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).shadowColor.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Scan Locations',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.location_on,
+                        size: 14, color: Colors.green.shade600),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${clusters.length} ${clusters.length == 1 ? 'site' : 'sites'}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: SizedBox(
+              height: 220,
+              child: FlutterMap(
+                options: MapOptions(
+                  initialCenter: LatLng(avgLat, avgLng),
+                  initialZoom: data.scanLocations.length == 1 ? 14.0 : 10.0,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.padizdoctor.app',
+                  ),
+                  MarkerLayer(
+                    markers: clusters.entries.map((entry) {
+                      final locs = entry.value;
+                      final first = locs.first;
+                      final count = locs.length;
+
+                      return Marker(
+                        width: count > 1 ? 40 : 30,
+                        height: count > 1 ? 40 : 30,
+                        point:
+                            LatLng(first.latitude, first.longitude),
+                        child: GestureDetector(
+                          onTap: () => _showLocationDetail(
+                              context, first, count),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade600,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                  color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.green.withOpacity(0.4),
+                                  blurRadius: 6,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                            child: Center(
+                              child: count > 1
+                                  ? Text(
+                                      '$count',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : const Icon(
+                                      Icons.eco,
+                                      color: Colors.white,
+                                      size: 14,
+                                    ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          // Location list summary
+          ...clusters.entries.take(3).map((entry) {
+            final locs = entry.value;
+            final first = locs.first;
+            final count = locs.length;
+            final label = first.name ??
+                '${first.latitude.toStringAsFixed(4)}, ${first.longitude.toStringAsFixed(4)}';
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green.shade500,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: const TextStyle(fontSize: 13),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    '$count ${count == 1 ? 'scan' : 'scans'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (clusters.length > 3)
+            Padding(
+              padding: const EdgeInsets.only(top: 4.0),
+              child: Text(
+                '+ ${clusters.length - 3} more locations',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showLocationDetail(
+      BuildContext context, ScanLocation location, int scanCount) {
+    final dateStr = DateFormat('MMM dd, yyyy').format(location.date);
+    final locationLabel = location.name ??
+        '${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}';
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Icon(Icons.location_on, color: Colors.green.shade600, size: 22),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text('Scan Location',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(locationLabel,
+                style:
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+            const SizedBox(height: 8),
+            Text('$scanCount ${scanCount == 1 ? 'scan' : 'scans'} at this location',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+            const SizedBox(height: 4),
+            Text('Last scan: $dateStr',
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
         ],
       ),
     );

@@ -1,3 +1,17 @@
+class ScanLocation {
+  final double latitude;
+  final double longitude;
+  final String? name;
+  final DateTime date;
+
+  ScanLocation({
+    required this.latitude,
+    required this.longitude,
+    this.name,
+    required this.date,
+  });
+}
+
 class ActivityData {
   final int healthyCount;
   final int alertsCount;
@@ -9,6 +23,7 @@ class ActivityData {
   final Map<DateTime, int> scansByDate;
   final int totalScans;
   final String avgTimeStr;
+  final List<ScanLocation> scanLocations;
 
   ActivityData({
     required this.healthyCount,
@@ -21,5 +36,6 @@ class ActivityData {
     required this.scansByDate,
     required this.totalScans,
     required this.avgTimeStr,
+    required this.scanLocations,
   });
 }

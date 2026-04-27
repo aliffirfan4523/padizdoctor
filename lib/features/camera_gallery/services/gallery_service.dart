@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import '../../../model/model.dart';
@@ -146,8 +147,12 @@ Future<PlatformFile> pickPaddyImage() async {
 
 /// Saves inference results to Firestore and returns the [recordId] (nowId)
 /// so callers can navigate directly to the results screen.
+///
+/// When [position] is provided, the scan's GPS coordinates and optional
+/// [locationName] are saved alongside the DiagnosisRecord.
 Future<String> addInferenceResultToHistory(
-    LlmResult llmResult, PlatformFile imageFile) async {
+    LlmResult llmResult, PlatformFile imageFile,
+    {Position? position, String? locationName}) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) return "";
   try {
@@ -185,7 +190,10 @@ Future<String> addInferenceResultToHistory(
       id: nowId,
       image_id: img.id,
       timestamp: nowTs,
-      user_id: user!.uid, // Replace with actual user ID
+      user_id: user!.uid,
+      latitude: position?.latitude,
+      longitude: position?.longitude,
+      locationName: locationName,
     );
 
     print("--- STARTING DEEP DEBUG ---");

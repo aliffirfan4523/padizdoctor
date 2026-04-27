@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:padizdoctor/core/services/location_service.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/analysis_confirmation.dart';
 import 'package:padizdoctor/features/camera_gallery/services/image_edit_service.dart';
 import 'package:padizdoctor/features/camera_gallery/screens/upload_loading.dart';
@@ -331,10 +333,23 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
               // Inner try/catch handles ML/API errors (blurry image, server
               // errors, bad format). On failure → AnalysisFailed screen.
               LlmResult? llmResult;
+              Position? scanPosition;
+              String? locationName;
               try {
                 setState(() => widget._isAnalyzing = true);
 
+                // Capture GPS location in parallel with inference
+                final locationFuture = LocationService.getCurrentPosition();
                 final result = await inferenceImage(widget.editedImage);
+                scanPosition = await locationFuture;
+
+                // Reverse geocode in background (don't block the flow)
+                if (scanPosition != null) {
+                  locationName = await LocationService.reverseGeocode(
+                    scanPosition.latitude,
+                    scanPosition.longitude,
+                  );
+                }
 
                 llmResult = LlmResult(
                   detections: [
@@ -393,7 +408,8 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
               try {
                 // ── Phase 2: Firebase save ────────────────────────────────
                 recordId = await addInferenceResultToHistory(
-                    llmResult, widget.editedImage);
+                    llmResult, widget.editedImage,
+                    position: scanPosition, locationName: locationName);
               } on Exception catch (uploadError) {
                 // Network / Upload failure → Upload Failed screen
                 setState(() => widget._isAnalyzing = false);
