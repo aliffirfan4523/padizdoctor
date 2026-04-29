@@ -170,7 +170,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
                 fit: BoxFit.cover,
                 // Darken the image so white text stands out
                 colorFilter: ColorFilter.mode(
-                  Colors.black.withOpacity(0.4),
+                  Colors.black.withValues(alpha: 0.4),
                   BlendMode.darken,
                 ),
               ),
@@ -184,7 +184,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.white38),
                   ),

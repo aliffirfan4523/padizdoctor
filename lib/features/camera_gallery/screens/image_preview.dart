@@ -64,7 +64,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
       body: SafeArea(
         child: Column(
           children: [
-            SizedBox(height: 600, child: _buildImagePreview()),
+            SizedBox(height: 500, child: _buildImagePreview()),
             widget._isAnalyzing ? SizedBox() : _buildTools(),
             widget._isAnalyzing ? Container() : _buildRunButton(),
           ],
@@ -211,7 +211,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
                     boxShadow: [
                       if (_isLoading) // Only show glow when analyzing
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
+                          color: Colors.black.withValues(alpha: 0.2),
                           blurRadius: glowSpread * 2,
                           spreadRadius: glowSpread,
                         ),

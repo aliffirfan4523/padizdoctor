@@ -50,14 +50,21 @@ String formatTimestamp(Timestamp? timestamp) {
 
 // Helpers for dynamic UI
 Color getStatusColor(String? status) {
-  if (status == "Healthy") return Colors.greenAccent;
-  if (status == "Low") return Colors.yellowAccent;
-  if (status == "MEDIUM") return Colors.orangeAccent;
-  return Colors.redAccent;
+  final s = status?.toLowerCase() ?? "";
+  if (s == "healthy" || s == "none") return Colors.greenAccent;
+  if (s == "low") return Colors.yellowAccent;
+  if (s == "moderate" || s == "medium") return Colors.orangeAccent;
+  if (s == "high") return Colors.redAccent;
+  if (s == "very high") return Colors.red;
+  return Colors.grey;
 }
 
 IconData getStatusIcon(String? status) {
-  if (status == "Healthy") return Icons.check_circle;
-  if (status == "Moderate Risk") return Icons.warning;
-  return Icons.error;
+  final s = status?.toLowerCase() ?? "";
+  if (s == "healthy" || s == "none") return Icons.check_circle;
+  if (s == "low" || s == "moderate" || s == "medium" || s == "high") {
+    return Icons.warning;
+  }
+  if (s == "very high") return Icons.error;
+  return Icons.help_outline;
 }

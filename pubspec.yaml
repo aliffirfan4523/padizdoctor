@@ -44,6 +44,9 @@ dependencies:
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
   intl: any
+  pdf: ^3.11.1
+  printing: ^5.13.2
+  share_plus: ^10.0.2
 
 dev_dependencies:
   flutter_test:

@@ -75,7 +75,7 @@ class _MyProfileState extends State<MyProfile> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 10,
                         offset: const Offset(0, 5),
                       ),
@@ -116,7 +116,8 @@ class _MyProfileState extends State<MyProfile> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionHeader("Personal Information", Icons.person_outline),
+                  _buildSectionHeader(
+                      "Personal Information", Icons.person_outline),
                   _buildCard(
                     child: Column(
                       children: [
@@ -134,7 +135,9 @@ class _MyProfileState extends State<MyProfile> {
                             });
                           },
                         ),
-                        Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                        Divider(
+                            height: 1,
+                            color: Colors.grey.withValues(alpha: 0.2)),
                         _buildTextField(
                           label: "Email Address",
                           controller: emailController,
@@ -170,18 +173,24 @@ class _MyProfileState extends State<MyProfile> {
                           _buildListTile(
                             icon: Icons.lock_outline,
                             title: "Change Password",
-                            onTap: () => Navigator.pushNamed(context, AppRoutes.changePassword),
+                            onTap: () => Navigator.pushNamed(
+                                context, AppRoutes.changePassword),
                           ),
                         if (!AuthService.instance.isGoogleOnly) ...[
-                          Divider(height: 1, color: Colors.grey.withOpacity(0.2)),
+                          Divider(
+                              height: 1,
+                              color: Colors.grey.withValues(alpha: 0.2)),
                           _buildListTile(
                             icon: Icons.lock_reset,
                             title: "Forgot Password?",
                             subtitle: "Send a reset link to your email",
                             onTap: () async {
-                              final email = FirebaseAuth.instance.currentUser?.email ?? '';
+                              final email =
+                                  FirebaseAuth.instance.currentUser?.email ??
+                                      '';
                               if (email.isEmpty) return;
-                              final result = await AuthService.instance.sendPasswordReset(email);
+                              final result = await AuthService.instance
+                                  .sendPasswordReset(email);
                               if (!mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
                                 SnackBar(
@@ -200,26 +209,33 @@ class _MyProfileState extends State<MyProfile> {
                   _buildSectionHeader("App Settings", Icons.settings_outlined),
                   _buildCard(
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      title: const Text("Theme", style: TextStyle(fontWeight: FontWeight.w500)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 8),
+                      title: const Text("Theme",
+                          style: TextStyle(fontWeight: FontWeight.w500)),
                       leading: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(FluentIcons.paint_brush_24_regular, color: Colors.blue),
+                        child: const Icon(FluentIcons.paint_brush_24_regular,
+                            color: Colors.blue),
                       ),
                       trailing: ToggleButtons(
                         borderRadius: BorderRadius.circular(1000),
-                        constraints: const BoxConstraints(minHeight: 36, minWidth: 48),
+                        constraints:
+                            const BoxConstraints(minHeight: 36, minWidth: 48),
                         isSelected: options
-                            .map((option) => widget.controller.themeMode == option.theme)
+                            .map((option) =>
+                                widget.controller.themeMode == option.theme)
                             .toList(),
                         onPressed: (index) {
-                          widget.controller.updateThemeMode(options[index].theme);
+                          widget.controller
+                              .updateThemeMode(options[index].theme);
                         },
-                        children: options.map((option) => option.widget).toList(),
+                        children:
+                            options.map((option) => option.widget).toList(),
                       ),
                     ),
                   ),
@@ -247,17 +263,22 @@ class _MyProfileState extends State<MyProfile> {
                             isNameChanged = false;
                           });
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text("Profile updated!")));
+                              const SnackBar(
+                                  content: Text("Profile updated!")));
                         }
                       },
                       child: const Text("Save Changes",
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
-                  if (isNameChanged || isEmailChanged) const SizedBox(height: 15),
+                  if (isNameChanged || isEmailChanged)
+                    const SizedBox(height: 15),
 
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isDark ? Colors.red.withOpacity(0.1) : Colors.red.shade50,
+                      backgroundColor: isDark
+                          ? Colors.red.withValues(alpha: 0.1)
+                          : Colors.red.shade50,
                       foregroundColor: Colors.red,
                       minimumSize: const Size(double.infinity, 50),
                       shape: RoundedRectangleBorder(
@@ -266,7 +287,8 @@ class _MyProfileState extends State<MyProfile> {
                     ),
                     icon: const Icon(Icons.logout),
                     label: const Text("Log Out",
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                     onPressed: () async {
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         AppRoutes.login,
@@ -309,7 +331,7 @@ class _MyProfileState extends State<MyProfile> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -369,7 +391,7 @@ class _MyProfileState extends State<MyProfile> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.green.withOpacity(0.1),
+          color: Colors.green.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: Colors.green.shade700),
@@ -378,7 +400,8 @@ class _MyProfileState extends State<MyProfile> {
       subtitle: subtitle != null
           ? Text(subtitle, style: const TextStyle(fontSize: 12))
           : null,
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+      trailing:
+          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: onTap,
     );
   }
@@ -470,7 +493,8 @@ class _MyProfileState extends State<MyProfile> {
 
                 if (!mounted) return;
                 if (result == 'success') {
-                  setState(() {}); // Refresh UI to show "Change Password" instead
+                  setState(
+                      () {}); // Refresh UI to show "Change Password" instead
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(

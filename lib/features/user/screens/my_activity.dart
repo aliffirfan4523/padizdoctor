@@ -1,14 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:padizdoctor/features/user/widgets/WeeklyDetectionsCard.dart';
+import 'package:padizdoctor/features/user/widgets/widgets.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:padizdoctor/features/user/services/my_history_service.dart';
+import 'package:padizdoctor/features/user/screens/detection_analysis_result.dart';
 
+import 'package:padizdoctor/features/user/services/report_service.dart';
 import '../../../model/MyActivityData.dart';
 
 class MyActivity extends StatefulWidget {
@@ -19,8 +18,6 @@ class MyActivity extends StatefulWidget {
 }
 
 class _MyActivityState extends State<MyActivity> {
-  int touchedIndex = -1;
-
   final List<Color> chartColors = [
     Colors.green,
     Colors.redAccent,
@@ -29,7 +26,8 @@ class _MyActivityState extends State<MyActivity> {
     Colors.purpleAccent,
   ];
 
-  ActivityData _processData(List<Map<String, dynamic>> scans, DocumentSnapshot? statsDoc) {
+  ActivityData _processData(
+      List<Map<String, dynamic>> scans, DocumentSnapshot? statsDoc) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
 
@@ -81,6 +79,8 @@ class _MyActivityState extends State<MyActivity> {
           longitude: lng.toDouble(),
           name: scan['record']['location_name'] as String?,
           date: date,
+          severity: severity ?? 'N/A',
+          diseaseName: diseaseName,
         ));
       }
 
@@ -116,8 +116,10 @@ class _MyActivityState extends State<MyActivity> {
     if (statsDoc != null && statsDoc.exists) {
       final statsMap = statsDoc.data() as Map<String, dynamic>?;
       if (statsMap != null) {
-        final totalMs = (statsMap['totalProcessingTime'] as num?)?.toDouble() ?? 0.0;
-        final totalSubs = (statsMap['totalSubmissions'] as num?)?.toDouble() ?? 0.0;
+        final totalMs =
+            (statsMap['totalProcessingTime'] as num?)?.toDouble() ?? 0.0;
+        final totalSubs =
+            (statsMap['totalSubmissions'] as num?)?.toDouble() ?? 0.0;
         if (totalSubs > 0) {
           avgTimeStr = (totalMs / totalSubs / 1000.0).toStringAsFixed(1) + "s";
         }
@@ -136,6 +138,7 @@ class _MyActivityState extends State<MyActivity> {
       totalScans: scans.length,
       avgTimeStr: avgTimeStr,
       scanLocations: scanLocations,
+      scans: scans,
     );
   }
 
@@ -144,167 +147,371 @@ class _MyActivityState extends State<MyActivity> {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId == null) return const SizedBox.shrink();
 
-    return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.green,
-        child: const Icon(Icons.download_rounded, color: Colors.black87),
-      ),
-      body: SafeArea(
-        child: StreamBuilder<DocumentSnapshot>(
-          stream: FirebaseFirestore.instance.collection('users').doc(userId).collection('activitySummary').doc('stats').snapshots(),
-          builder: (context, statsSnapshot) {
-            final statsDoc = statsSnapshot.data;
-            return StreamBuilder<List<Map<String, dynamic>>>(
-              stream: ScanService.getDetailedScans(userId),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .collection('activitySummary')
+          .doc('stats')
+          .snapshots(),
+      builder: (context, statsSnapshot) {
+        final statsDoc = statsSnapshot.data;
+        return StreamBuilder<List<Map<String, dynamic>>>(
+          stream: ScanService.getDetailedScans(userId),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()));
+            }
 
-                final scans = snapshot.data ?? [];
-                final data = _processData(scans, statsDoc);
+            final scans = snapshot.data ?? [];
+            final data = _processData(scans, statsDoc);
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildHeader(context, data),
-                      const SizedBox(height: 24),
-                      _buildTopStatCards(data),
-                      const SizedBox(height: 16),
-                      WeeklyDetectionsCard(data: data),
-                      const SizedBox(height: 16),
-                      _buildDiseaseDistributionCard(data),
-                      if (data.scanLocations.isNotEmpty) ...[
-                        const SizedBox(height: 16),
-                        _buildScanLocationsMapCard(data),
-                      ],
-                    ],
-                  ),
-                );
-              },
+            return Scaffold(
+              floatingActionButton: scans.isEmpty ? null : FloatingActionButton(
+                onPressed: () => ReportService.generateAndDownloadReport(data),
+                backgroundColor: Colors.green,
+                child:
+                    const Icon(Icons.download_rounded, color: Colors.black87),
+              ),
+              body: SafeArea(
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    // Firebase streams auto-update, but we add a small delay
+                    // to give the user satisfying visual feedback that a refresh occurred.
+                    await Future.delayed(const Duration(seconds: 1));
+                  },
+                  child: scans.isEmpty
+                      ? ListView(
+                          children: [
+                            SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.8,
+                              child: EmptyActivityState(
+                                onScanPressed: () {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Use the Camera tab below to start scanning!'),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        )
+                      : SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ActivityHeader(
+                                data: data,
+                                onCalendarTap: (context, data) =>
+                                    _showCalendar(context, data),
+                              ),
+                              const SizedBox(height: 24),
+                              _buildTopStatCards(data),
+                              const SizedBox(height: 16),
+                              WeeklyDetectionsCard(data: data),
+                              const SizedBox(height: 16),
+                              DiseaseDistributionCard(
+                                data: data,
+                                chartColors: chartColors,
+                              ),
+                              if (data.scanLocations.isNotEmpty) ...[
+                                const SizedBox(height: 16),
+                                ScanLocationsMapCard(
+                                  data: data,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                ),
+              ),
             );
           },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ActivityData data) {
-    final now = DateTime.now();
-    final monthYear = DateFormat('MMM yyyy').format(now);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Trend Reports',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                'User Overview • $monthYear',
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-        Row(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.calendar_today, size: 20),
-                onPressed: () {
-                  _showCalendar(context, data);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: Theme.of(context).dividerColor),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.tune, size: 20),
-                onPressed: () {},
-              ),
-            ),
-          ],
-        )
-      ],
+        );
+      },
     );
   }
 
   void _showCalendar(BuildContext context, ActivityData data) {
+    DateTime selectedDay = DateTime.now();
+    DateTime focusedDay = DateTime.now();
+
     showDialog(
       context: context,
       builder: (context) {
-        return Dialog(
-          backgroundColor: Theme.of(context).cardColor,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Scan History',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                TableCalendar(
-                  firstDay: DateTime.utc(2020, 1, 1),
-                  lastDay: DateTime.utc(2030, 12, 31),
-                  focusedDay: DateTime.now(),
-                  calendarBuilders: CalendarBuilders(
-                    markerBuilder: (context, date, events) {
-                      final normalizedDate =
-                          DateTime(date.year, date.month, date.day);
-                      final count = data.scansByDate[normalizedDate] ?? 0;
-                      if (count == 0) return const SizedBox.shrink();
+        return StatefulBuilder(builder: (context, setDialogState) {
+          return Dialog(
+            backgroundColor: Theme.of(context).cardColor,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Scan History',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  TableCalendar(
+                    firstDay: DateTime.utc(2020, 1, 1),
+                    lastDay: DateTime.utc(2030, 12, 31),
+                    focusedDay: focusedDay,
+                    selectedDayPredicate: (day) => isSameDay(selectedDay, day),
+                    onDaySelected: (selected, focused) {
+                      setDialogState(() {
+                        selectedDay = selected;
+                        focusedDay = focused;
+                      });
 
-                      // Vary intensity/size based on scan count
-                      double size = 6.0;
-                      Color color = Colors.green.shade400;
-                      if (count >= 2 && count < 5) {
-                        size = 8.0;
-                        color = Colors.green.shade600;
-                      } else if (count >= 5) {
-                        size = 10.0;
-                        color = Colors.green.shade800;
-                      }
+                      // Filter scans for the selected date
+                      final filteredScans = data.scans.where((scan) {
+                        final timestamp =
+                            scan['record']['timestamp'] as Timestamp?;
+                        if (timestamp == null) return false;
+                        return isSameDay(timestamp.toDate(), selectedDay);
+                      }).toList();
 
-                      return Positioned(
-                        bottom: 4,
-                        child: Container(
-                          width: size,
-                          height: size,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
+                      if (filteredScans.isNotEmpty) {
+                        Navigator.pop(context);
+                        _showReportsForDate(
+                            context, selectedDay, filteredScans);
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                                'No scans found for ${DateFormat('MMM dd, yyyy').format(selectedDay)}'),
+                            duration: const Duration(seconds: 2),
                           ),
-                        ),
-                      );
+                        );
+                      }
                     },
+                    calendarBuilders: CalendarBuilders(
+                      markerBuilder: (context, date, events) {
+                        final normalizedDate =
+                            DateTime(date.year, date.month, date.day);
+                        final count = data.scansByDate[normalizedDate] ?? 0;
+                        if (count == 0) return const SizedBox.shrink();
+
+                        // Vary intensity/size based on scan count
+                        double size = 6.0;
+                        Color color = Colors.green.shade400;
+                        if (count >= 2 && count < 5) {
+                          size = 8.0;
+                          color = Colors.green.shade600;
+                        } else if (count >= 5) {
+                          size = 10.0;
+                          color = Colors.green.shade800;
+                        }
+
+                        return Positioned(
+                          bottom: 4,
+                          child: Container(
+                            width: size,
+                            height: size,
+                            decoration: BoxDecoration(
+                              color: color,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    headerStyle: const HeaderStyle(
+                      formatButtonVisible: false,
+                      titleCentered: true,
+                    ),
                   ),
-                  headerStyle: const HeaderStyle(
-                    formatButtonVisible: false,
-                    titleCentered: true,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
+          );
+        });
+      },
+    );
+  }
+
+  void _showReportsForDate(BuildContext context, DateTime date,
+      List<Map<String, dynamic>> filteredScans) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.7,
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Reports for ${DateFormat('MMMM dd').format(date)}',
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          '${filteredScans.length} scans found',
+                          style:
+                              const TextStyle(fontSize: 14, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: filteredScans.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    final scan = filteredScans[index];
+                    final diseaseName = scan['disease']?['disease_name'] ??
+                        scan['result']?['disease_id'] ??
+                        "Healthy";
+                    final severity =
+                        scan['result']['severity'] as String? ?? 'N/A';
+                    final timestamp = scan['record']['timestamp'] as Timestamp;
+                    final timeStr =
+                        DateFormat('hh:mm a').format(timestamp.toDate());
+                    final imageUrl = scan['image']['file_name'] as String?;
+
+                    Color severityColor = Colors.green;
+                    if (severity == 'Moderate') severityColor = Colors.orange;
+                    if (severity == 'High') severityColor = Colors.red;
+
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnalysisResultsScreen(
+                              recordId: scan['record_id'],
+                              imageId: scan['record']['image_id'],
+                              userId: FirebaseAuth.instance.currentUser!.uid,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border:
+                              Border.all(color: Theme.of(context).dividerColor),
+                        ),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: imageUrl != null
+                                  ? Image.network(
+                                      imageUrl,
+                                      width: 60,
+                                      height: 60,
+                                      fit: BoxFit.cover,
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              Container(
+                                        width: 60,
+                                        height: 60,
+                                        color: Colors.grey.shade200,
+                                        child: const Icon(
+                                            Icons.image_not_supported,
+                                            size: 20),
+                                      ),
+                                    )
+                                  : Container(
+                                      width: 60,
+                                      height: 60,
+                                      color: Colors.grey.shade200,
+                                      child: const Icon(Icons.image, size: 20),
+                                    ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    diseaseName,
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: severityColor.withValues(
+                                              alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                        ),
+                                        child: Text(
+                                          severity,
+                                          style: TextStyle(
+                                            color: severityColor,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        timeStr,
+                                        style: const TextStyle(
+                                            fontSize: 12, color: Colors.grey),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         );
       },
@@ -315,525 +522,39 @@ class _MyActivityState extends State<MyActivity> {
     return Row(
       children: [
         Expanded(
-          child: _statCard(
+          child: StatCard(
             title: "HEALTHY",
             countStr: NumberFormat.decimalPattern().format(data.healthyCount),
             trend: data.healthyTrend,
             icon: Icons.check_circle,
             color: Colors.green,
-            bgColor: Colors.green.withOpacity(0.1),
+            bgColor: Colors.green.withValues(alpha: 0.1),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _statCard(
+          child: StatCard(
             title: "ALERTS",
             countStr: NumberFormat.decimalPattern().format(data.alertsCount),
             trend: data.alertsTrend,
             icon: Icons.warning_rounded,
             color: Colors.redAccent,
-            bgColor: Colors.redAccent.withOpacity(0.1),
+            bgColor: Colors.redAccent.withValues(alpha: 0.1),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _statCard(
+          child: StatCard(
             title: "AVG TIME",
             countStr: data.avgTimeStr,
             trend: 0,
             icon: Icons.timer,
             color: Colors.blueAccent,
-            bgColor: Colors.blueAccent.withOpacity(0.1),
+            bgColor: Colors.blueAccent.withValues(alpha: 0.1),
             showTrend: false,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _statCard({
-    required String title,
-    required String countStr,
-    required double trend,
-    required IconData icon,
-    required Color color,
-    required Color bgColor,
-    bool showTrend = true,
-  }) {
-    final isPositive = trend >= 0;
-    final trendStr = '${isPositive ? '+' : ''}${trend.toStringAsFixed(0)}%';
-
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Theme.of(context).textTheme.bodySmall?.color,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                countStr,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (showTrend)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: isPositive
-                        ? Colors.green.withOpacity(0.15)
-                        : Colors.red.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        isPositive ? Icons.trending_up : Icons.trending_down,
-                        color: isPositive ? Colors.green : Colors.red,
-                        size: 14,
-                      ),
-                      const SizedBox(width: 2),
-                      Text(
-                        trendStr,
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isPositive ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDiseaseDistributionCard(ActivityData data) {
-    if (data.totalScans == 0) return const SizedBox.shrink();
-
-    // Sort diseases by count descending
-    final sortedEntries = data.diseaseDistribution.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    // Prepare pie chart sections
-    List<PieChartSectionData> sections = [];
-    List<Widget> legendItems = [];
-
-    for (int i = 0; i < sortedEntries.length; i++) {
-      final entry = sortedEntries[i];
-      final color = chartColors[i % chartColors.length];
-      final percentage = (entry.value / data.totalScans) * 100;
-      final isTouched = i == touchedIndex;
-      final radius = isTouched ? 45.0 : 40.0;
-
-      sections.add(
-        PieChartSectionData(
-          color: color,
-          value: entry.value.toDouble(),
-          title: '', // We use legend instead of titles on pie
-          radius: radius,
-        ),
-      );
-
-      legendItems.add(
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: Row(
-            children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  entry.key,
-                  style: const TextStyle(
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                '${percentage.toStringAsFixed(0)}%',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Disease Distribution',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                flex: 1,
-                child: AspectRatio(
-                  aspectRatio: 1,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      PieChart(
-                        PieChartData(
-                          pieTouchData: PieTouchData(
-                            touchCallback:
-                                (FlTouchEvent event, pieTouchResponse) {
-                              setState(() {
-                                if (!event.isInterestedForInteractions ||
-                                    pieTouchResponse == null ||
-                                    pieTouchResponse.touchedSection == null) {
-                                  touchedIndex = -1;
-                                  return;
-                                }
-                                touchedIndex = pieTouchResponse
-                                    .touchedSection!.touchedSectionIndex;
-                              });
-                            },
-                          ),
-                          borderData: FlBorderData(show: false),
-                          sectionsSpace: 0,
-                          centerSpaceRadius: 40,
-                          sections: sections,
-                        ),
-                      ),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            data.totalScans.toString(),
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 24),
-              Expanded(
-                flex: 1,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: legendItems,
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
-    );
-  }
-
-  // ── Scan Locations Map Card ──────────────────────────────────────────────
-  Widget _buildScanLocationsMapCard(ActivityData data) {
-    // Calculate map center from all scan locations
-    double avgLat = 0, avgLng = 0;
-    for (var loc in data.scanLocations) {
-      avgLat += loc.latitude;
-      avgLng += loc.longitude;
-    }
-    avgLat /= data.scanLocations.length;
-    avgLng /= data.scanLocations.length;
-
-    // Group scans by approximate location for cluster counts
-    final Map<String, List<ScanLocation>> clusters = {};
-    for (var loc in data.scanLocations) {
-      // Round to ~100m precision for clustering
-      final key = '${loc.latitude.toStringAsFixed(3)},${loc.longitude.toStringAsFixed(3)}';
-      clusters.putIfAbsent(key, () => []).add(loc);
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Theme.of(context).dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Scan Locations',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const Spacer(),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.location_on,
-                        size: 14, color: Colors.green.shade600),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${clusters.length} ${clusters.length == 1 ? 'site' : 'sites'}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade600,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 220,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(avgLat, avgLng),
-                  initialZoom: data.scanLocations.length == 1 ? 14.0 : 10.0,
-                  interactionOptions: const InteractionOptions(
-                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                  ),
-                ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.padizdoctor.app',
-                  ),
-                  MarkerLayer(
-                    markers: clusters.entries.map((entry) {
-                      final locs = entry.value;
-                      final first = locs.first;
-                      final count = locs.length;
-
-                      return Marker(
-                        width: count > 1 ? 40 : 30,
-                        height: count > 1 ? 40 : 30,
-                        point:
-                            LatLng(first.latitude, first.longitude),
-                        child: GestureDetector(
-                          onTap: () => _showLocationDetail(
-                              context, first, count),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.green.shade600,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                  color: Colors.white, width: 2),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.green.withOpacity(0.4),
-                                  blurRadius: 6,
-                                  spreadRadius: 1,
-                                ),
-                              ],
-                            ),
-                            child: Center(
-                              child: count > 1
-                                  ? Text(
-                                      '$count',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : const Icon(
-                                      Icons.eco,
-                                      color: Colors.white,
-                                      size: 14,
-                                    ),
-                            ),
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          // Location list summary
-          ...clusters.entries.take(3).map((entry) {
-            final locs = entry.value;
-            final first = locs.first;
-            final count = locs.length;
-            final label = first.name ??
-                '${first.latitude.toStringAsFixed(4)}, ${first.longitude.toStringAsFixed(4)}';
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.green.shade500,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      label,
-                      style: const TextStyle(fontSize: 13),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  Text(
-                    '$count ${count == 1 ? 'scan' : 'scans'}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }),
-          if (clusters.length > 3)
-            Padding(
-              padding: const EdgeInsets.only(top: 4.0),
-              child: Text(
-                '+ ${clusters.length - 3} more locations',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                  fontStyle: FontStyle.italic,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
-  void _showLocationDetail(
-      BuildContext context, ScanLocation location, int scanCount) {
-    final dateStr = DateFormat('MMM dd, yyyy').format(location.date);
-    final locationLabel = location.name ??
-        '${location.latitude.toStringAsFixed(4)}, ${location.longitude.toStringAsFixed(4)}';
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.location_on, color: Colors.green.shade600, size: 22),
-            const SizedBox(width: 8),
-            const Expanded(
-              child: Text('Scan Location',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(locationLabel,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 8),
-            Text('$scanCount ${scanCount == 1 ? 'scan' : 'scans'} at this location',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-            const SizedBox(height: 4),
-            Text('Last scan: $dateStr',
-                style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
     );
   }
 }

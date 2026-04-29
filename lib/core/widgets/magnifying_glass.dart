@@ -62,7 +62,7 @@ class _MagnifyingGlassAnimationState extends State<MagnifyingGlassAnimation>
             width: 60,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.black.withOpacity(0.25),
+              color: Colors.black.withValues(alpha: 0.25),
             ),
             child: const Icon(
               Icons.search,

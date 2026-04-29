@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:padizdoctor/app.dart';
 import 'package:padizdoctor/features/auth/services/auth_service.dart';
 import 'package:padizdoctor/core/utils/colors_utils.dart';
 import 'package:padizdoctor/core/widgets/reusable_text_field.dart';

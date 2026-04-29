@@ -32,7 +32,7 @@ class IntroPage extends StatelessWidget {
 
           // Dark overlay for readability
           Container(
-            color: Colors.black.withOpacity(0.35),
+            color: Colors.black.withValues(alpha: 0.35),
           ),
 
           // Content with semi-transparent box
@@ -41,7 +41,8 @@ class IntroPage extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               margin: const EdgeInsets.symmetric(horizontal: 30),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.4), // semi-transparent box
+                color:
+                    Colors.black.withValues(alpha: 0.4), // semi-transparent box
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Column(
@@ -73,7 +74,7 @@ class IntroPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                     softWrap: true,
                   ),

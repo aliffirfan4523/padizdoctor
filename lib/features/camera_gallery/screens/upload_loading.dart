@@ -71,7 +71,7 @@ class ImageQualityLoading extends StatelessWidget {
                           begin: Alignment.bottomCenter,
                           end: Alignment.center,
                           colors: [
-                            Colors.white.withOpacity(0.8),
+                            Colors.white.withValues(alpha: 0.8),
                             Colors.transparent,
                           ],
                         ),

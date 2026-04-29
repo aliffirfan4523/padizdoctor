@@ -7,9 +7,9 @@ Widget buildSuggestionCard(Map<String, dynamic> sug) {
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(12),
-      border: Border.all(color: Colors.green.withOpacity(0.2)),
+      border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
       boxShadow: [
-        BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 5)
+        BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 5)
       ],
     ),
     child: Row(

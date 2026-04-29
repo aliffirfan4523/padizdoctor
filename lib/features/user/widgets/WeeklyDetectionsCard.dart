@@ -26,7 +26,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
         border: Border.all(color: Theme.of(context).dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).shadowColor.withOpacity(0.05),
+            color: Theme.of(context).shadowColor.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -46,7 +46,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                 decoration: BoxDecoration(
                   color: Theme.of(context).cardColor == Colors.white
                       ? Colors.grey.shade200
-                      : Colors.grey.withOpacity(0.2),
+                      : Colors.grey.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -65,7 +65,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                           boxShadow: isWeeklyView
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   )
@@ -99,7 +99,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                           boxShadow: !isWeeklyView
                               ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
+                                    color: Colors.black.withValues(alpha: 0.05),
                                     blurRadius: 4,
                                     offset: const Offset(0, 2),
                                   )
@@ -149,38 +149,65 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                       interval: 1,
                       getTitlesWidget: (value, meta) {
                         if (isWeeklyView) {
-                          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                          if (value < 0 || value >= days.length) return const SizedBox.shrink();
+                          const days = [
+                            'Mon',
+                            'Tue',
+                            'Wed',
+                            'Thu',
+                            'Fri',
+                            'Sat',
+                            'Sun'
+                          ];
+                          if (value < 0 || value >= days.length)
+                            return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               days[value.toInt()],
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12),
                             ),
                           );
                         } else {
                           const weeks = ['W1', 'W2', 'W3', 'W4'];
-                          if (value < 0 || value >= weeks.length) return const SizedBox.shrink();
+                          if (value < 0 || value >= weeks.length)
+                            return const SizedBox.shrink();
                           return Padding(
                             padding: const EdgeInsets.only(top: 8.0),
                             child: Text(
                               weeks[value.toInt()],
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              style: const TextStyle(
+                                  color: Colors.grey, fontSize: 12),
                             ),
                           );
                         }
                       },
                     ),
                   ),
-                  leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 30,
+                      getTitlesWidget: (value, meta) {
+                        return Text(
+                          value.toInt().toString(),
+                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false)),
                 ),
                 borderData: FlBorderData(show: false),
                 minX: 0,
                 maxX: isWeeklyView ? 6 : 3,
                 minY: 0,
-                maxY: (isWeeklyView ? data.weeklyDetections : data.monthlyDetections)
+                maxY: (isWeeklyView
+                            ? data.weeklyDetections
+                            : data.monthlyDetections)
                         .reduce((a, b) => a > b ? a : b)
                         .toDouble() +
                     2,
@@ -190,7 +217,10 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                       isWeeklyView ? 7 : 4,
                       (i) => FlSpot(
                         i.toDouble(),
-                        (isWeeklyView ? data.weeklyDetections[i] : data.monthlyDetections[i]).toDouble(),
+                        (isWeeklyView
+                                ? data.weeklyDetections[i]
+                                : data.monthlyDetections[i])
+                            .toDouble(),
                       ),
                     ),
                     isCurved: true,
@@ -200,7 +230,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                     dotData: FlDotData(show: true),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Colors.green.shade400.withOpacity(0.2),
+                      color: Colors.green.shade400.withValues(alpha: 0.2),
                     ),
                   ),
                 ],

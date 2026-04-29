@@ -27,7 +27,7 @@ class Sidebar extends StatelessWidget {
 
         // ===== TEXT =====
         textStyle: TextStyle(
-          color: Colors.white.withOpacity(0.75),
+          color: Colors.white.withValues(alpha: 0.75),
           fontSize: 14,
           fontWeight: FontWeight.w500,
         ),
@@ -40,7 +40,7 @@ class Sidebar extends StatelessWidget {
         selectedItemTextPadding: const EdgeInsets.only(left: 24),
 
         // ===== HOVER =====
-        hoverColor: PaddyColors.accentGreen.withOpacity(0.2),
+        hoverColor: PaddyColors.accentGreen.withValues(alpha: 0.2),
         hoverTextStyle: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w600,
@@ -49,7 +49,7 @@ class Sidebar extends StatelessWidget {
         // ===== NORMAL ITEM =====
         itemDecoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
-          color: PaddyColors.primaryGreen.withOpacity(0.2),
+          color: PaddyColors.primaryGreen.withValues(alpha: 0.2),
         ),
 
         // ===== SELECTED ITEM =====
@@ -58,14 +58,14 @@ class Sidebar extends StatelessWidget {
           gradient: LinearGradient(
             colors: [
               PaddyColors.accentGreen, // Soft green highlight
-              PaddyColors.secondaryGreen.withOpacity(0.4),
+              PaddyColors.secondaryGreen.withValues(alpha: 0.4),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           boxShadow: [
             BoxShadow(
-              color: PaddyColors.secondaryGreen.withOpacity(0.3),
+              color: PaddyColors.secondaryGreen.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -74,7 +74,7 @@ class Sidebar extends StatelessWidget {
 
         // ===== ICONS =====
         iconTheme: IconThemeData(
-          color: Colors.white.withOpacity(0.7),
+          color: Colors.white.withValues(alpha: 0.7),
           size: 22,
         ),
         selectedIconTheme: const IconThemeData(
@@ -155,5 +155,5 @@ class Sidebar extends StatelessWidget {
 }
 
 const white = Colors.white;
-final actionColor = const Color(0xFF5F5FA7).withOpacity(0.6);
-final divider = Divider(color: white.withOpacity(0.3), height: 1);
+final actionColor = const Color(0xFF5F5FA7).withValues(alpha: 0.6);
+final divider = Divider(color: white.withValues(alpha: 0.3), height: 1);

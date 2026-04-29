@@ -8,6 +8,8 @@ import '../services/my_history_service.dart';
 
 import '../widgets/widgets.dart';
 
+import 'package:share_plus/share_plus.dart';
+
 class AnalysisResultsScreen extends StatefulWidget {
   final String recordId;
   final String imageId;
@@ -27,80 +29,103 @@ class AnalysisResultsScreen extends StatefulWidget {
 class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          "Analysis Results",
-        ),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              // Implement delete functionality
-              try {
-                deleteDiagnosisRecord(
-                    widget.recordId, widget.userId, widget.imageId);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Record deleted successfully")),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Failed to delete record")),
-                );
-              }
-            },
+    return FutureBuilder<Map<String, dynamic>>(
+      future: fetchFullAnalysisData(widget.recordId, widget.imageId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+              body: Center(child: CircularProgressIndicator()));
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return const Scaffold(
+              body: Center(child: Text("Error loading analysis results")));
+        }
+
+        final data = snapshot.data!;
+        final List<dynamic> resultsList = data['results'];
+        final Map<String, dynamic> diseasesMap = data['diseases'];
+        final image = data['image'];
+        final record = data['record'];
+        final List<dynamic> allSuggestions = data['suggestions'];
+
+        // 1. Aggregate ALL bounding boxes from ALL results
+        final List<BoundingBoxes> allDetections = [];
+        for (var result in resultsList) {
+          final boxes = (result['bounding_boxes'] as List).map((box) {
+            double x1 = box['x1']?.toDouble() ?? 0.0;
+            double y1 = box['y1']?.toDouble() ?? 0.0;
+            double x2 = box['x2']?.toDouble() ?? 0.0;
+            double y2 = box['y2']?.toDouble() ?? 0.0;
+
+            return BoundingBoxes(
+              confidence: box['confidence']?.toDouble() ?? 0.0,
+              label: box['label'] ?? 'unknown',
+              x1: x1,
+              y1: y1,
+              x2: x2,
+              y2: y2,
+              width: (x2 - x1).toDouble(),
+              height: (y2 - y1).toDouble(),
+            );
+          }).toList();
+          allDetections.addAll(boxes);
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Analysis Results"),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.share),
+                onPressed: () {
+                  final firstResult =
+                      resultsList.isNotEmpty ? resultsList.first : null;
+                  final diseaseId = firstResult?['disease_id'] ?? 'Unknown';
+                  final diseaseName =
+                      diseasesMap[diseaseId]?['disease_name'] ?? 'Unknown';
+                  final severity = firstResult?['severity'] ?? 'N/A';
+                  final imageUrl = image['file_name'] ?? '';
+                  final date = record['timestamp'] != null
+                      ? DateFormat('MMM dd, yyyy')
+                          .format((record['timestamp'] as Timestamp).toDate())
+                      : 'Unknown Date';
+
+                  final shareText = "🌱 PadizDoctor Scan Result\n"
+                      "Disease: $diseaseName\n"
+                      "Severity: $severity\n"
+                      "Date: $date\n\n"
+                      "View Image: $imageUrl";
+
+                  Share.share(shareText);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                onPressed: () {
+                  try {
+                    deleteDiagnosisRecord(
+                        widget.recordId, widget.userId, widget.imageId);
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Record deleted successfully")),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Failed to delete record")),
+                    );
+                  }
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchFullAnalysisData(widget.recordId, widget.imageId),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (snapshot.hasError || !snapshot.hasData) {
-            return const Center(child: Text("Error loading analysis results"));
-          }
-
-          final data = snapshot.data!;
-          print(data['results']);
-          final List<dynamic> resultsList = data['results'];
-          final Map<String, dynamic> diseasesMap = data['diseases'];
-          final image = data['image'];
-          final record = data['record'];
-          final List<dynamic> allSuggestions = data['suggestions'];
-
-          // 1. Aggregate ALL bounding boxes from ALL results
-          final List<BoundingBoxes> allDetections = [];
-          for (var result in resultsList) {
-            final boxes = (result['bounding_boxes'] as List).map((box) {
-              double x1 = box['x1']?.toDouble() ?? 0.0;
-              double y1 = box['y1']?.toDouble() ?? 0.0;
-              double x2 = box['x2']?.toDouble() ?? 0.0;
-              double y2 = box['y2']?.toDouble() ?? 0.0;
-
-              return BoundingBoxes(
-                confidence: box['confidence']?.toDouble() ?? 0.0,
-                label: box['label'] ?? 'unknown',
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2,
-                width: (x2 - x1).toDouble(),
-                height: (y2 - y1).toDouble(),
-              );
-            }).toList();
-            allDetections.addAll(boxes);
-          }
-
-          return DefaultTabController(
+          body: DefaultTabController(
             length: resultsList.length,
             child: NestedScrollView(
               headerSliverBuilder: (context, innerBoxIsScrolled) => [
@@ -118,6 +143,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                             animation: tabController,
                             builder: (context, _) {
                               final activeIndex = tabController.index;
+
                               final activeResult =
                                   resultsList[activeIndex] as Map;
                               return DetectionHeader(
@@ -151,8 +177,10 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                               locationText = record['location_name'];
                             } else if (record['latitude'] != null &&
                                 record['longitude'] != null) {
-                              final lat = (record['latitude'] as num).toDouble();
-                              final lng = (record['longitude'] as num).toDouble();
+                              final lat =
+                                  (record['latitude'] as num).toDouble();
+                              final lng =
+                                  (record['longitude'] as num).toDouble();
                               locationText =
                                   '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}';
                             }
@@ -265,9 +293,9 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                 }).toList(),
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
