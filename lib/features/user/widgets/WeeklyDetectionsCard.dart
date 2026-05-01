@@ -1,5 +1,6 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:padizdoctor/model/MyActivityData.dart';
 
 class WeeklyDetectionsCard extends StatefulWidget {
@@ -14,9 +15,66 @@ class WeeklyDetectionsCard extends StatefulWidget {
 class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
   bool isWeeklyView = true;
 
+  Map<String, List<int>> _getDiseaseTrends() {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    Map<String, List<int>> trends = {};
+
+    for (var scan in widget.data.scans) {
+      final timestamp = scan['record']['timestamp'] as Timestamp?;
+      if (timestamp == null) continue;
+
+      final date = timestamp.toDate();
+      final scanDay = DateTime(date.year, date.month, date.day);
+      final diffDays = today.difference(scanDay).inDays;
+
+      final diseaseName = scan['disease']?['disease_name'] ??
+          scan['result']?['disease_id'] ??
+          "Healthy";
+
+      if (!trends.containsKey(diseaseName)) {
+        trends[diseaseName] = List.filled(isWeeklyView ? 7 : 4, 0);
+      }
+
+      if (isWeeklyView) {
+        if (diffDays >= 0 && diffDays < 7) {
+          // Map weekday 1=Mon, 7=Sun to index 0=Mon, 6=Sun
+          trends[diseaseName]![date.weekday - 1]++;
+        }
+      } else {
+        if (diffDays >= 0 && diffDays < 28) {
+          int weekIndex = 3 - (diffDays ~/ 7);
+          trends[diseaseName]![weekIndex]++;
+        }
+      }
+    }
+    return trends;
+  }
+
+  final List<Color> diseaseColors = [
+    Colors.green,
+    Colors.redAccent,
+    Colors.orange,
+    Colors.blueAccent,
+    Colors.purpleAccent,
+    Colors.teal,
+    Colors.amber,
+    Colors.indigo,
+  ];
+
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
+    final diseaseTrends = _getDiseaseTrends();
+    final diseaseNames = diseaseTrends.keys.toList();
+
+    // Calculate MaxY across all trends
+    double maxVal = 0;
+    for (var trend in diseaseTrends.values) {
+      for (var val in trend) {
+        if (val > maxVal) maxVal = val.toDouble();
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -130,11 +188,27 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
             aspectRatio: 1.8,
             child: LineChart(
               LineChartData(
-                lineTouchData: LineTouchData(enabled: true),
+                lineTouchData: LineTouchData(
+                  enabled: true,
+                  touchTooltipData: LineTouchTooltipData(
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        final diseaseName = diseaseNames[spot.barIndex];
+                        return LineTooltipItem(
+                          '$diseaseName: ${spot.y.toInt()}',
+                          TextStyle(
+                            color: diseaseColors[spot.barIndex % diseaseColors.length],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 2,
+                  horizontalInterval: maxVal > 5 ? (maxVal / 5).ceil().toDouble() : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Theme.of(context).dividerColor,
                     strokeWidth: 1,
@@ -188,6 +262,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 30,
+                      interval: maxVal > 5 ? (maxVal / 5).ceil().toDouble() : 1,
                       getTitlesWidget: (value, meta) {
                         return Text(
                           value.toInt().toString(),
@@ -205,37 +280,56 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                 minX: 0,
                 maxX: isWeeklyView ? 6 : 3,
                 minY: 0,
-                maxY: (isWeeklyView
-                            ? data.weeklyDetections
-                            : data.monthlyDetections)
-                        .reduce((a, b) => a > b ? a : b)
-                        .toDouble() +
-                    2,
-                lineBarsData: [
-                  LineChartBarData(
+                maxY: maxVal + 1,
+                lineBarsData: List.generate(diseaseNames.length, (index) {
+                  final diseaseName = diseaseNames[index];
+                  final trend = diseaseTrends[diseaseName]!;
+                  final color = diseaseColors[index % diseaseColors.length];
+
+                  return LineChartBarData(
                     spots: List.generate(
-                      isWeeklyView ? 7 : 4,
-                      (i) => FlSpot(
-                        i.toDouble(),
-                        (isWeeklyView
-                                ? data.weeklyDetections[i]
-                                : data.monthlyDetections[i])
-                            .toDouble(),
-                      ),
+                      trend.length,
+                      (i) => FlSpot(i.toDouble(), trend[i].toDouble()),
                     ),
                     isCurved: true,
-                    color: Colors.green.shade400,
-                    barWidth: 4,
+                    color: color,
+                    barWidth: 3,
                     isStrokeCapRound: true,
-                    dotData: FlDotData(show: true),
+                    dotData: const FlDotData(show: false),
                     belowBarData: BarAreaData(
                       show: true,
-                      color: Colors.green.shade400.withValues(alpha: 0.2),
+                      color: color.withValues(alpha: 0.1),
                     ),
-                  ),
-                ],
+                  );
+                }),
               ),
             ),
+          ),
+          const SizedBox(height: 20),
+          // Legend
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            children: List.generate(diseaseNames.length, (index) {
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: diseaseColors[index % diseaseColors.length],
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    diseaseNames[index],
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              );
+            }),
           ),
         ],
       ),
