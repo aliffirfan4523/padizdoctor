@@ -1,8 +1,9 @@
-import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
+import '../../../core/utils/format_Name.dart';
 import '../../../model/MyActivityData.dart';
 
 class ReportService {
@@ -42,7 +43,8 @@ class ReportService {
 
             // Summary Stats
             pw.Text('Summary Statistics',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 10),
             pw.Row(
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -57,7 +59,8 @@ class ReportService {
 
             // Disease Distribution Table
             pw.Text('Disease Distribution',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 10),
             pw.TableHelper.fromTextArray(
               headers: ['Disease Name', 'Count', 'Percentage'],
@@ -70,31 +73,35 @@ class ReportService {
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey300),
               cellAlignment: pw.Alignment.centerLeft,
             ),
             pw.SizedBox(height: 30),
 
             // Recent Scans
             pw.Text('Recent Scans (Last 20)',
-                style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
+                style:
+                    pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold)),
             pw.SizedBox(height: 10),
             pw.TableHelper.fromTextArray(
               headers: ['Date/Time', 'Disease', 'Severity', 'Location'],
               data: data.scans.take(20).map((scan) {
                 final timestamp = scan['record']['timestamp'];
-                final dateStr = timestamp != null 
-                  ? DateFormat('MM/dd HH:mm').format(timestamp.toDate())
-                  : 'N/A';
-                final diseaseName = scan['disease']?['disease_name'] ?? 
-                                   scan['result']?['disease_id'] ?? "Healthy";
+                final dateStr = timestamp != null
+                    ? DateFormat('MM/dd HH:mm').format(timestamp.toDate())
+                    : 'N/A';
+                final diseaseName = scan['disease']?['disease_name'] ??
+                    scan['result']?['disease_id'] ??
+                    "Healthy";
                 final severity = scan['result']['severity'] ?? 'N/A';
                 final location = scan['record']['location_name'] ?? 'N/A';
 
-                return [dateStr, diseaseName, severity, location];
+                return [dateStr, formatName(diseaseName), severity, location];
               }).toList(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+              headerDecoration:
+                  const pw.BoxDecoration(color: PdfColors.grey300),
               cellAlignment: pw.Alignment.centerLeft,
             ),
           ];
@@ -120,7 +127,8 @@ class ReportService {
         children: [
           pw.Text(label, style: const pw.TextStyle(fontSize: 10)),
           pw.Text(value,
-              style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
+              style:
+                  pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold)),
         ],
       ),
     );

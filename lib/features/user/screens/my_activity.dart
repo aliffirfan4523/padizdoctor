@@ -2,12 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:padizdoctor/features/user/screens/detection_analysis_result.dart';
+import 'package:padizdoctor/features/user/services/my_history_service.dart';
+import 'package:padizdoctor/features/user/services/report_service.dart';
 import 'package:padizdoctor/features/user/widgets/widgets.dart';
 import 'package:table_calendar/table_calendar.dart';
-import 'package:padizdoctor/features/user/services/my_history_service.dart';
-import 'package:padizdoctor/features/user/screens/detection_analysis_result.dart';
 
-import 'package:padizdoctor/features/user/services/report_service.dart';
+import '../../../core/utils/format_Name.dart';
 import '../../../model/MyActivityData.dart';
 
 class MyActivity extends StatefulWidget {
@@ -57,8 +58,7 @@ class _MyActivityState extends State<MyActivity> {
       final severity = scan['result']['severity'] as String?;
       final isHealthy = severity == 'None';
       final diseaseName = scan['disease']?['disease_name'] ??
-          scan['result']?['disease_id'] ??
-          "Healthy";
+          formatName(scan['result']?['disease_id'] ?? "Healthy");
 
       // All time counts
       if (isHealthy) {
@@ -168,12 +168,15 @@ class _MyActivityState extends State<MyActivity> {
             final data = _processData(scans, statsDoc);
 
             return Scaffold(
-              floatingActionButton: scans.isEmpty ? null : FloatingActionButton(
-                onPressed: () => ReportService.generateAndDownloadReport(data),
-                backgroundColor: Colors.green,
-                child:
-                    const Icon(Icons.download_rounded, color: Colors.black87),
-              ),
+              floatingActionButton: scans.isEmpty
+                  ? null
+                  : FloatingActionButton(
+                      onPressed: () =>
+                          ReportService.generateAndDownloadReport(data),
+                      backgroundColor: Colors.green,
+                      child: const Icon(Icons.download_rounded,
+                          color: Colors.black87),
+                    ),
               body: SafeArea(
                 child: RefreshIndicator(
                   onRefresh: () async {
@@ -190,7 +193,8 @@ class _MyActivityState extends State<MyActivity> {
                                 onScanPressed: () {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Use the Camera tab below to start scanning!'),
+                                      content: Text(
+                                          'Use the Camera tab below to start scanning!'),
                                     ),
                                   );
                                 },
@@ -396,8 +400,7 @@ class _MyActivityState extends State<MyActivity> {
                   itemBuilder: (context, index) {
                     final scan = filteredScans[index];
                     final diseaseName = scan['disease']?['disease_name'] ??
-                        scan['result']?['disease_id'] ??
-                        "Healthy";
+                        formatName(scan['result']?['disease_id'] ?? "Healthy");
                     final severity =
                         scan['result']['severity'] as String? ?? 'N/A';
                     final timestamp = scan['record']['timestamp'] as Timestamp;
@@ -464,7 +467,7 @@ class _MyActivityState extends State<MyActivity> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    diseaseName,
+                                    formatName(diseaseName),
                                     style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16),

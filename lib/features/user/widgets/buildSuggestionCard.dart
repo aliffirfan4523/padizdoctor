@@ -100,7 +100,6 @@ Widget buildSuggestionCard(Map<String, dynamic> sug) {
                   Text(
                     otherText,
                     style: TextStyle(
-                      color: Colors.grey[800],
                       height: 1.5,
                       fontSize: 14,
                     ),
@@ -144,7 +143,6 @@ Widget _buildMethodSection(
       Text(
         content,
         style: TextStyle(
-          color: Colors.grey[800],
           height: 1.6,
           fontSize: 14,
         ),

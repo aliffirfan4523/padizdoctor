@@ -7,7 +7,7 @@ Widget buildInfoSection(String title, String content) {
       Text(title,
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
       const SizedBox(height: 8),
-      Text(content, style: TextStyle(color: Colors.grey[700], height: 1.5)),
+      Text(content, style: TextStyle(height: 1.5)),
     ],
   );
 }

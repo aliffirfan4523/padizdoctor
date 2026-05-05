@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:padizdoctor/model/MyActivityData.dart';
 
+import '../../../core/utils/format_Name.dart';
+
 class WeeklyDetectionsCard extends StatefulWidget {
   final ActivityData data;
 
@@ -29,8 +31,7 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
       final diffDays = today.difference(scanDay).inDays;
 
       final diseaseName = scan['disease']?['disease_name'] ??
-          scan['result']?['disease_id'] ??
-          "Healthy";
+          formatName(scan['result']?['disease_id'] ?? "Healthy");
 
       if (!trends.containsKey(diseaseName)) {
         trends[diseaseName] = List.filled(isWeeklyView ? 7 : 4, 0);
@@ -197,7 +198,8 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                         return LineTooltipItem(
                           '$diseaseName: ${spot.y.toInt()}',
                           TextStyle(
-                            color: diseaseColors[spot.barIndex % diseaseColors.length],
+                            color: diseaseColors[
+                                spot.barIndex % diseaseColors.length],
                             fontWeight: FontWeight.bold,
                           ),
                         );
@@ -208,7 +210,8 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: maxVal > 5 ? (maxVal / 5).ceil().toDouble() : 1,
+                  horizontalInterval:
+                      maxVal > 5 ? (maxVal / 5).ceil().toDouble() : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
                     color: Theme.of(context).dividerColor,
                     strokeWidth: 1,
@@ -266,7 +269,8 @@ class _WeeklyDetectionsCardState extends State<WeeklyDetectionsCard> {
                       getTitlesWidget: (value, meta) {
                         return Text(
                           value.toInt().toString(),
-                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                          style:
+                              const TextStyle(color: Colors.grey, fontSize: 10),
                         );
                       },
                     ),

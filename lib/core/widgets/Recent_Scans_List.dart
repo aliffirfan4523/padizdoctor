@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:padizdoctor/features/user/services/my_history_service.dart';
 import 'package:padizdoctor/features/user/widgets/scan_card.dart';
 
+import '../utils/format_Name.dart';
 import 'reusable_widget.dart';
 
 class RecentScansList extends StatelessWidget {
@@ -27,8 +28,10 @@ class RecentScansList extends StatelessWidget {
 
     if (scanDate == today) return "Today";
     if (scanDate == today.subtract(const Duration(days: 1))) return "Yesterday";
-    if (scanDate.isAfter(today.subtract(const Duration(days: 7)))) return "Last 7 Days";
-    if (scanDate.isAfter(today.subtract(const Duration(days: 30)))) return "Last 30 Days";
+    if (scanDate.isAfter(today.subtract(const Duration(days: 7))))
+      return "Last 7 Days";
+    if (scanDate.isAfter(today.subtract(const Duration(days: 30))))
+      return "Last 30 Days";
     return "Older";
   }
 
@@ -68,8 +71,10 @@ class RecentScansList extends StatelessWidget {
         if (filter != "All") {
           scans = scans.where((scan) {
             final severity = scan['result']?['severity']?.toString() ?? "None";
-            if (filter == "Healthy") return severity == "None" || severity == "Healthy";
-            if (filter == "Alerts") return severity != "None" && severity != "Healthy";
+            if (filter == "Healthy")
+              return severity == "None" || severity == "Healthy";
+            if (filter == "Alerts")
+              return severity != "None" && severity != "Healthy";
             return true;
           }).toList();
         }
@@ -127,7 +132,7 @@ class RecentScansList extends StatelessWidget {
               child: ScanCard(
                 userId: userId,
                 title: scan['disease']?['disease_name'] ??
-                    scan['result']?['disease_id'] ??
+                    formatName(scan['result']?['disease_id']) ??
                     "Healthy",
                 subtitle: scan['result']['severity'] ?? "Unknown",
                 recordId: scan['record_id'],

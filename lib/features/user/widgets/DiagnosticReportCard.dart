@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:padizdoctor/core/utils/bounding_box.dart';
 import 'package:padizdoctor/model/diagnosis_result.dart';
+
+import '../../../core/utils/format_Name.dart';
 
 class DiagnosticReportCard extends StatelessWidget {
   final Map<String, dynamic> image;
@@ -36,6 +38,8 @@ class DiagnosticReportCard extends StatelessWidget {
     final double imgWidth = (image['width'] as num?)?.toDouble() ?? 16.0;
     final double imgHeight = (image['height'] as num?)?.toDouble() ?? 9.0;
     final double aspectRatio = imgHeight > 0 ? imgWidth / imgHeight : 16 / 9;
+    final double imageFrameWidth = imgWidth > imgHeight ? 560 : 420;
+    final int exportCacheWidth = imgWidth.clamp(1600.0, 3200.0).round();
 
     return Container(
       width: 800, // Further increased width for maximum clarity
@@ -91,34 +95,39 @@ class DiagnosticReportCard extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Main Image with Bounding Boxes
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: AspectRatio(
-              aspectRatio: aspectRatio,
-              child: Stack(
-                children: [
-                  Positioned.fill(
-                    child: CachedNetworkImage(
-                      imageUrl: image['file_name'] ?? '',
-                      fit: BoxFit.fill,
-                      maxWidthDiskCache: 2000,
-                      memCacheWidth: 2000,
-                      placeholder: (context, url) =>
-                          Container(color: Colors.grey[200]),
-                      errorWidget: (context, url, error) =>
-                          const Icon(Icons.error),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: CustomPaint(
-                      painter: BoundingBoxPainter(
-                        detections,
-                        Size(imgWidth, imgHeight),
-                        activeLabel: activeLabel,
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxWidth: imageFrameWidth),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: AspectRatio(
+                  aspectRatio: aspectRatio,
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: CachedNetworkImage(
+                          imageUrl: image['file_name'] ?? '',
+                          fit: BoxFit.fill,
+                          maxWidthDiskCache: exportCacheWidth,
+                          memCacheWidth: exportCacheWidth,
+                          placeholder: (context, url) =>
+                              Container(color: Colors.grey[200]),
+                          errorWidget: (context, url, error) =>
+                              const Icon(Icons.error),
+                        ),
                       ),
-                    ),
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: BoundingBoxPainter(
+                            detections,
+                            Size(imgWidth, imgHeight),
+                            activeLabel: activeLabel,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
@@ -140,15 +149,17 @@ class DiagnosticReportCard extends StatelessWidget {
             final diseaseId = res['disease_id'];
             final disease = diseases[diseaseId] ??
                 {
-                  'disease_name': _formatName(diseaseId ?? 'Unknown'),
+                  'disease_name': formatName(diseaseId ?? 'Unknown'),
                   'description': 'No details available.'
                 };
 
-            final String diseaseName = _formatName(disease['disease_name'] ?? 'Unknown');
+            final String diseaseName =
+                formatName(disease['disease_name'] ?? 'Unknown');
             final String description =
                 disease['description'] ?? 'No details available.';
             final String severity = res['severity'] ?? 'N/A';
-            final String rawSymptoms = (res['symptoms'] as String?)?.trim() ?? '';
+            final String rawSymptoms =
+                (res['symptoms'] as String?)?.trim() ?? '';
             final String symptoms =
                 rawSymptoms.isNotEmpty ? rawSymptoms : 'None';
             final double confidence =
@@ -353,12 +364,5 @@ class DiagnosticReportCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatName(String name) {
-    return name.split('_').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
   }
 }

@@ -1,18 +1,19 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:intl/intl.dart';
-import 'package:padizdoctor/core/utils/bounding_box.dart';
+import 'package:padizdoctor/features/user/widgets/DiagnosticReportCard.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../core/utils/format_Name.dart';
 import '../../../model/model.dart';
 import '../services/my_history_service.dart';
 import '../widgets/widgets.dart';
-import 'package:padizdoctor/features/user/widgets/DiagnosticReportCard.dart';
 
 class AnalysisResultsScreen extends StatefulWidget {
   final String recordId;
@@ -32,6 +33,9 @@ class AnalysisResultsScreen extends StatefulWidget {
 
 class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
   final GlobalKey _shareKey = GlobalKey();
+  static const double _shareTargetWidth = 3200;
+  static const double _minSharePixelRatio = 3.0;
+  static const double _maxSharePixelRatio = 6.0;
   bool _isSharing = false;
   Map<String, dynamic>? _sharingData;
   late Future<Map<String, dynamic>> _analysisFuture;
@@ -79,7 +83,13 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
         throw "Capture failed: Render object not found. Please try again.";
       }
 
-      ui.Image capturedImage = await boundary.toImage(pixelRatio: 3.0);
+      final double boundaryWidth = boundary.size.width;
+      final double pixelRatio = boundaryWidth > 0
+          ? (_shareTargetWidth / boundaryWidth)
+              .clamp(_minSharePixelRatio, _maxSharePixelRatio)
+          : _minSharePixelRatio;
+
+      ui.Image capturedImage = await boundary.toImage(pixelRatio: pixelRatio);
       ByteData? byteData =
           await capturedImage.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
@@ -223,37 +233,35 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                     ),
                   ],
                 ),
-                body: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Hidden DiagnosticReportCard for capturing
-                // Positioned far off-screen to ensure it's rendered but not visible
-                Positioned(
-                  left: -2000,
-                  top: -2000,
-                  child: RepaintBoundary(
-                    key: _shareKey,
-                    child: HeroMode(
-                      enabled: false,
-                      child: _sharingData != null
-                          ? DiagnosticReportCard(
-                              image: _sharingData!['image'],
-                              record: _sharingData!['record'],
-                              results: _sharingData!['results'],
-                              diseases: _sharingData!['diseases'],
-                              allSuggestions: _sharingData!['allSuggestions'],
-                              detections: _sharingData!['detections'],
-                              activeLabel: _sharingData!['activeLabel'],
-                            )
-                          : Container(
-                              width: 400,
-                              height: 600,
-                              color: Colors.white,
-                            ),
+                body: Stack(clipBehavior: Clip.none, children: [
+                  // Hidden DiagnosticReportCard for capturing
+                  // Positioned far off-screen to ensure it's rendered but not visible
+                  Positioned(
+                    left: -2000,
+                    top: -2000,
+                    child: RepaintBoundary(
+                      key: _shareKey,
+                      child: HeroMode(
+                        enabled: false,
+                        child: _sharingData != null
+                            ? DiagnosticReportCard(
+                                image: _sharingData!['image'],
+                                record: _sharingData!['record'],
+                                results: _sharingData!['results'],
+                                diseases: _sharingData!['diseases'],
+                                allSuggestions: _sharingData!['allSuggestions'],
+                                detections: _sharingData!['detections'],
+                                activeLabel: _sharingData!['activeLabel'],
+                              )
+                            : Container(
+                                width: 400,
+                                height: 600,
+                                color: Colors.white,
+                              ),
+                      ),
                     ),
                   ),
-                ),
-                NestedScrollView(
+                  NestedScrollView(
                     headerSliverBuilder: (context, innerBoxIsScrolled) => [
                       SliverToBoxAdapter(
                         child: Padding(
@@ -447,23 +455,16 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
     if (found != null) {
       final map = Map<String, dynamic>.from(found);
       if (map['disease_name'] != null) {
-        map['disease_name'] = _formatName(map['disease_name']);
+        map['disease_name'] = formatName(map['disease_name']);
       }
       return map;
     }
 
     // Unknown disease ID — return a generic fallback.
     return {
-      'disease_name': _formatName(diseaseId),
+      'disease_name': formatName(diseaseId),
       'description': 'No details available.'
     };
-  }
-
-  static String _formatName(String name) {
-    return name.split('_').map((word) {
-      if (word.isEmpty) return word;
-      return word[0].toUpperCase() + word.substring(1).toLowerCase();
-    }).join(' ');
   }
 
   Widget _buildDiseaseDetails(
