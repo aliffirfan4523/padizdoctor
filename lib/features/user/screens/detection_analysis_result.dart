@@ -444,9 +444,26 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
       };
     }
     final found = diseasesMap[diseaseId];
-    if (found != null) return Map<String, dynamic>.from(found);
+    if (found != null) {
+      final map = Map<String, dynamic>.from(found);
+      if (map['disease_name'] != null) {
+        map['disease_name'] = _formatName(map['disease_name']);
+      }
+      return map;
+    }
+
     // Unknown disease ID — return a generic fallback.
-    return {'disease_name': diseaseId, 'description': 'No details available.'};
+    return {
+      'disease_name': _formatName(diseaseId),
+      'description': 'No details available.'
+    };
+  }
+
+  static String _formatName(String name) {
+    return name.split('_').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 
   Widget _buildDiseaseDetails(
@@ -466,10 +483,6 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
         const SizedBox(height: 16),
         buildConfidenceScore(confidence),
         const SizedBox(height: 24),
-        buildInfoSection(
-          name == 'Healthy Crop' ? 'Crop Health Status' : 'About the Disease',
-          description,
-        ),
         const SizedBox(height: 24),
         buildInfoSection(
           'Symptoms',

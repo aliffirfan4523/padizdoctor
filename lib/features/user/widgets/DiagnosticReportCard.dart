@@ -139,11 +139,11 @@ class DiagnosticReportCard extends StatelessWidget {
             final diseaseId = res['disease_id'];
             final disease = diseases[diseaseId] ??
                 {
-                  'disease_name': diseaseId ?? 'Unknown',
+                  'disease_name': _formatName(diseaseId ?? 'Unknown'),
                   'description': 'No details available.'
                 };
 
-            final String diseaseName = disease['disease_name'] ?? 'Unknown';
+            final String diseaseName = _formatName(disease['disease_name'] ?? 'Unknown');
             final String description =
                 disease['description'] ?? 'No details available.';
             final String severity = res['severity'] ?? 'N/A';
@@ -183,15 +183,6 @@ class DiagnosticReportCard extends StatelessWidget {
                           "${(confidence * 100).toStringAsFixed(1)}% Confidence",
                           Colors.blue),
                     ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey[700],
-                      height: 1.5,
-                    ),
                   ),
                   const SizedBox(height: 16),
                   const Text(
@@ -361,5 +352,12 @@ class DiagnosticReportCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _formatName(String name) {
+    return name.split('_').map((word) {
+      if (word.isEmpty) return word;
+      return word[0].toUpperCase() + word.substring(1).toLowerCase();
+    }).join(' ');
   }
 }

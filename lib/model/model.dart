@@ -1,7 +1,6 @@
 // lib/model/models.dart
 export 'diagnosis_record.dart';
 export 'diagnosis_result.dart';
-export 'disease.dart';
 export 'image_file.dart';
 export 'treatment_suggestion.dart';
 export 'users.dart';

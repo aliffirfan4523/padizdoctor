@@ -12,9 +12,9 @@ Widget buildSuggestionCard(Map<String, dynamic> sug) {
   final organicMatch = RegExp(r"Organic:\s*(.*?)(?=Chemical:|$)",
           caseSensitive: false, dotAll: true)
       .firstMatch(fullText);
-  final chemicalMatch = RegExp(r"Chemical:\s*(.*)",
-          caseSensitive: false, dotAll: true)
-      .firstMatch(fullText);
+  final chemicalMatch =
+      RegExp(r"Chemical:\s*(.*)", caseSensitive: false, dotAll: true)
+          .firstMatch(fullText);
 
   if (organicMatch != null || chemicalMatch != null) {
     organicText = organicMatch?.group(1)?.trim();
@@ -26,7 +26,6 @@ Widget buildSuggestionCard(Map<String, dynamic> sug) {
   return Container(
     margin: const EdgeInsets.only(bottom: 16),
     decoration: BoxDecoration(
-      color: Colors.white,
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: Colors.green.withValues(alpha: 0.1)),
       boxShadow: [
