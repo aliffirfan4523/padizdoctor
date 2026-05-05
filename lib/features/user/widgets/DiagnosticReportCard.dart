@@ -33,6 +33,10 @@ class DiagnosticReportCard extends StatelessWidget {
     final String formattedDate =
         DateFormat('MMM dd, yyyy • hh:mm a').format(date);
 
+    final double imgWidth = (image['width'] as num?)?.toDouble() ?? 16.0;
+    final double imgHeight = (image['height'] as num?)?.toDouble() ?? 9.0;
+    final double aspectRatio = imgHeight > 0 ? imgWidth / imgHeight : 16 / 9;
+
     return Container(
       width: 800, // Further increased width for maximum clarity
       padding: const EdgeInsets.all(24),
@@ -90,13 +94,13 @@ class DiagnosticReportCard extends StatelessWidget {
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: AspectRatio(
-              aspectRatio: 16 / 9,
+              aspectRatio: aspectRatio,
               child: Stack(
                 children: [
                   Positioned.fill(
                     child: CachedNetworkImage(
                       imageUrl: image['file_name'] ?? '',
-                      fit: BoxFit.cover,
+                      fit: BoxFit.fill,
                       maxWidthDiskCache: 2000,
                       memCacheWidth: 2000,
                       placeholder: (context, url) =>
@@ -109,10 +113,7 @@ class DiagnosticReportCard extends StatelessWidget {
                     child: CustomPaint(
                       painter: BoundingBoxPainter(
                         detections,
-                        Size(
-                          (image['width'] as num?)?.toDouble() ?? 1000.0,
-                          (image['height'] as num?)?.toDouble() ?? 1000.0,
-                        ),
+                        Size(imgWidth, imgHeight),
                         activeLabel: activeLabel,
                       ),
                     ),
