@@ -457,6 +457,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
         (result['confidence_score'] as num?)?.toDouble() ?? 0.0;
     final String description =
         disease['description'] ?? 'No description available.';
+    final String symptoms = (result['symptoms'] as String?)?.trim() ?? 'None';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,6 +469,11 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
         buildInfoSection(
           name == 'Healthy Crop' ? 'Crop Health Status' : 'About the Disease',
           description,
+        ),
+        const SizedBox(height: 24),
+        buildInfoSection(
+          'Symptoms',
+          symptoms.isEmpty ? 'None' : symptoms,
         ),
       ],
     );

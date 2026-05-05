@@ -226,6 +226,7 @@ Future<String> addInferenceResultToHistory(
             ? 1.0
             : (bestDet?.confidence ?? 0.0),
         severity: advice.severity,
+        symptoms: advice.symptoms,
         bounding_boxes: specificBoxes,
       );
 

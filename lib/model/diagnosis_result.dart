@@ -5,6 +5,7 @@ class DiagnosisResult {
   String disease_id;
   String record_id;
   String severity;
+  String symptoms;
 
   DiagnosisResult({
     required this.id,
@@ -13,6 +14,7 @@ class DiagnosisResult {
     required this.disease_id,
     required this.record_id,
     required this.severity,
+    required this.symptoms,
   });
 
   // Inside DiagnosisResult class
@@ -23,6 +25,7 @@ class DiagnosisResult {
       'disease_id': disease_id,
       'confidence_score': confidence_score,
       'severity': severity,
+      'symptoms': symptoms,
       'bounding_boxes': bounding_boxes
           .map((box) => {
                 'label': box.label,

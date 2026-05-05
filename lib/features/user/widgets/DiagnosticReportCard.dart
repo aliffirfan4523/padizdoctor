@@ -147,6 +147,9 @@ class DiagnosticReportCard extends StatelessWidget {
             final String description =
                 disease['description'] ?? 'No details available.';
             final String severity = res['severity'] ?? 'N/A';
+            final String rawSymptoms = (res['symptoms'] as String?)?.trim() ?? '';
+            final String symptoms =
+                rawSymptoms.isNotEmpty ? rawSymptoms : 'None';
             final double confidence =
                 (res['confidence_score'] as num?)?.toDouble() ?? 0.0;
             final suggestions =
@@ -184,6 +187,24 @@ class DiagnosticReportCard extends StatelessWidget {
                   const SizedBox(height: 16),
                   Text(
                     description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "Symptoms",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    symptoms,
                     style: TextStyle(
                       fontSize: 13,
                       color: Colors.grey[700],
