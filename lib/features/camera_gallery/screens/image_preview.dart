@@ -445,7 +445,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
             },
             icon: widget._isAnalyzing ? Icon(Icons.block) : Icon(Icons.biotech),
             label: Text(
-              widget._isAnalyzing ? "" : "Run Diagnosis",
+              widget._isAnalyzing ? "" : "Run Diagnosis ",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
