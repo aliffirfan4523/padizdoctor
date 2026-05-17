@@ -2,7 +2,7 @@
 
 PadizDoctor is an intelligent Flutter application designed to assist farmers and agricultural experts in diagnosing paddy (rice) plant diseases. By leveraging advanced Machine Learning and Generative AI (LLMs), PadizDoctor provides accurate disease detection, detailed treatment plans, and actionable agricultural insights right from your smartphone.
 
-![PadizDoctor Banner](placeholder_banner.jpg)
+![PadizDoctor Banner](https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fhomepage.jpeg?alt=media&token=9fd763d3-74b8-4779-9471-ab72b61cfb1d)
 
 ## ✨ Key Features
 
@@ -15,9 +15,9 @@ PadizDoctor is an intelligent Flutter application designed to assist farmers and
 
 ## 📱 Screenshots
 
-| Home & Scanning | AI Analysis Results | Advanced Metrics |
-|:---:|:---:|:---:|
-| ![Home](placeholder_home.jpg) | ![Results](placeholder_results.jpg) | ![Metrics](placeholder_metrics.jpg) |
+| Home & Scanning | AI Analysis Results | Advanced Metrics | History |
+|:---:|:---:|:---:|:---:|
+| ![Home](https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fhomepage.jpeg?alt=media&token=9fd763d3-74b8-4779-9471-ab72b61cfb1d) | ![Results](https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fresult.jpeg?alt=media&token=d51069b9-6d9f-407f-aced-288a565a20e2) | ![Metrics](https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Factivity.jpeg?alt=media&token=99c29837-3625-4c44-94c8-561bdd8672d8) | ![History](https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fhistory.jpeg?alt=media&token=dc659c41-8512-4d25-99ae-69002cd534de) |
 
 ## 🛠️ Technology Stack
 
