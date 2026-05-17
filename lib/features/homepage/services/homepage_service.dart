@@ -21,15 +21,15 @@ class HomepageService {
           // 3. Return the data as a Map
           return doc.data() as Map<String, dynamic>;
         } else {
-          print("No Firestore document found for this UID.");
+          // No Firestore document found for this UID.
           return null;
         }
       } else {
-        print("No user is currently logged in.");
+        // No user is currently logged in.
         return null;
       }
     } catch (e) {
-      print("Error fetching user data: $e");
+      // Error fetching user data
       return null;
     }
   }
@@ -41,7 +41,7 @@ class HomepageService {
     if (userData != null) {
       return userData;
     } else {
-      print("Failed to load user data.");
+      // Failed to load user data.
       return null;
     }
   }

@@ -7,11 +7,15 @@ import 'package:padizdoctor/features/user/widgets/scan_card.dart';
 import '../utils/format_Name.dart';
 import 'reusable_widget.dart';
 
-class RecentScansList extends StatelessWidget {
+class RecentScansList extends StatefulWidget {
   final String userId;
   final int? limit;
   final String searchQuery;
   final String filter;
+  final bool isSelectable;
+  final Map<String, String> selectedRecords; // recordId -> imageId
+  final void Function(String recordId, String imageId)? onSelectionChanged;
+  final void Function(String recordId, String imageId)? onLongPress;
 
   const RecentScansList({
     super.key,
@@ -19,7 +23,32 @@ class RecentScansList extends StatelessWidget {
     this.limit,
     this.searchQuery = "",
     this.filter = "All",
+    this.isSelectable = false,
+    this.selectedRecords = const {},
+    this.onSelectionChanged,
+    this.onLongPress,
   });
+
+  @override
+  State<RecentScansList> createState() => _RecentScansListState();
+}
+
+class _RecentScansListState extends State<RecentScansList> {
+  late Stream<List<Map<String, dynamic>>> _scansStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _scansStream = ScanService.getDetailedScans(widget.userId);
+  }
+
+  @override
+  void didUpdateWidget(RecentScansList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.userId != widget.userId) {
+      _scansStream = ScanService.getDetailedScans(widget.userId);
+    }
+  }
 
   String _getGroupHeader(DateTime date) {
     final now = DateTime.now();
@@ -38,7 +67,7 @@ class RecentScansList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: ScanService.getDetailedScans(userId),
+      stream: _scansStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return _buildErrorState();
@@ -56,31 +85,31 @@ class RecentScansList extends StatelessWidget {
         var scans = snapshot.data ?? [];
 
         // Apply Search Query
-        if (searchQuery.isNotEmpty) {
+        if (widget.searchQuery.isNotEmpty) {
           scans = scans.where((scan) {
             final diseaseName = (scan['disease']?['disease_name'] ??
                     scan['result']?['disease_id'] ??
                     "Healthy")
                 .toString()
                 .toLowerCase();
-            return diseaseName.contains(searchQuery.toLowerCase());
+            return diseaseName.contains(widget.searchQuery.toLowerCase());
           }).toList();
         }
 
         // Apply Filter
-        if (filter != "All") {
+        if (widget.filter != "All") {
           scans = scans.where((scan) {
             final severity = scan['result']?['severity']?.toString() ?? "None";
-            if (filter == "Healthy")
+            if (widget.filter == "Healthy")
               return severity == "None" || severity == "Healthy";
-            if (filter == "Alerts")
+            if (widget.filter == "Alerts")
               return severity != "None" && severity != "Healthy";
             return true;
           }).toList();
         }
 
-        if (limit != null && scans.length > limit!) {
-          scans = scans.sublist(0, limit);
+        if (widget.limit != null && scans.length > widget.limit!) {
+          scans = scans.sublist(0, widget.limit);
         }
 
         if (scans.isEmpty) {
@@ -96,7 +125,7 @@ class RecentScansList extends StatelessWidget {
 
           final group = _getGroupHeader(timestamp.toDate());
           if (group != currentGroup) {
-            if (group != "Today" || limit != null) {
+            if (group != "Today" || widget.limit != null) {
               items.add(group);
             }
             currentGroup = group;
@@ -127,22 +156,34 @@ class RecentScansList extends StatelessWidget {
             }
 
             final scan = item as Map<String, dynamic>;
+            final recordId = scan['record_id'];
+            final imageId = scan['record']['image_id'];
+            final isSelected = widget.selectedRecords.containsKey(recordId);
+
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
               child: ScanCard(
-                userId: userId,
-                title: scan['disease']?['disease_name'] ??
-                    formatName(scan['result']?['disease_id']) ??
-                    "Healthy",
-                subtitle: scan['result']['severity'] ?? "Unknown",
-                recordId: scan['record_id'],
-                imageId: scan['record']['image_id'],
+                userId: widget.userId,
+                title: scan['disease']?['disease_name']?.toString() ??
+                    (scan['result']?['disease_id'] != null
+                        ? formatName(scan['result']!['disease_id'].toString())
+                        : "Healthy"),
+                subtitle: scan['result']?['severity']?.toString() ?? "Unknown",
+                recordId: recordId?.toString() ?? "",
+                imageId: imageId?.toString() ?? "",
                 detail:
                     "Confidence: ${((scan['result']['confidence_score'] ?? 0) * 100).toStringAsFixed(0)}%",
                 time: formatTimestamp(scan['record']['timestamp']),
                 imagePath: scan['image']['file_name'] ?? "",
                 statusColor: getStatusColor(scan['result']['severity']),
                 statusIcon: getStatusIcon(scan['result']['severity']),
+                isSelected: isSelected,
+                onLongPress: widget.onLongPress != null
+                    ? () => widget.onLongPress!(recordId, imageId)
+                    : null,
+                onTapOverride: widget.isSelectable
+                    ? () => widget.onSelectionChanged?.call(recordId, imageId)
+                    : null,
               ),
             );
           },

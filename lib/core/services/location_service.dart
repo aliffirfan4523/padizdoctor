@@ -27,7 +27,7 @@ class LocationService {
         ),
       );
     } catch (e) {
-      print('LocationService: Failed to get position — $e');
+      // LocationService: Failed to get position
       return null;
     }
   }
@@ -74,7 +74,7 @@ class LocationService {
         return parts.join(', ');
       }
     } catch (e) {
-      print('LocationService: Reverse geocoding failed — $e');
+      // LocationService: Reverse geocoding failed
     }
     return null;
   }

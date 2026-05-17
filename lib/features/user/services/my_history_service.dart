@@ -146,10 +146,8 @@ Future<void> deleteDiagnosisRecord(
   final batch = firestore.batch();
 
   try {
-    print("DEBUG DELETE: recordId=$recordId, userId=$userId, imageId=$imageId");
-
     if (recordId == null || userId == null || imageId == null) {
-      print("❌ ERROR: One of the required fields is NULL!");
+      // ❌ ERROR: One of the required fields is NULL!
       return;
     }
     // 1. Delete Image from Storage
@@ -191,8 +189,8 @@ Future<void> deleteDiagnosisRecord(
 
     // Commit all deletions
     await batch.commit();
-    print("Record $recordId and image deleted successfully.");
+    // Record deleted successfully.
   } catch (e) {
-    print("Failed to delete record: $e");
+    // Failed to delete record
   }
 }

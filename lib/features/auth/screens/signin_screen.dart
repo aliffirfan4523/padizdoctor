@@ -157,7 +157,7 @@ class _SignInScreenState extends State<SignInScreen> {
                           );
                         }
                       }).onError((error, stackTrace) {
-                        print("Error ${error.toString()}");
+                        // Error ${error.toString()}
                       });
                     },
                     style: ElevatedButton.styleFrom(

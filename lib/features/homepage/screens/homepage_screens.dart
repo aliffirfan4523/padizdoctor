@@ -8,6 +8,7 @@ import 'package:padizdoctor/model/AppRoutes.dart';
 
 import '../../../core/widgets/Recent_Scans_List.dart';
 import '../../../core/widgets/reusable_header.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomepageScreens extends StatefulWidget {
   HomepageScreens({super.key, required this.controller, required this.user});
@@ -166,7 +167,9 @@ class _HomepageScreensState extends State<HomepageScreens> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               image: DecorationImage(
-                image: AssetImage("assets/images/introgif.gif"), // Your image
+                image: CachedNetworkImageProvider(
+                  "https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fintrogif.gif?alt=media&token=1da9d9a9-63ac-441a-929f-184678aa7f19",
+                ), // Firebase hosted image
                 fit: BoxFit.cover,
                 // Darken the image so white text stands out
                 colorFilter: ColorFilter.mode(
@@ -216,9 +219,18 @@ class _HomepageScreensState extends State<HomepageScreens> {
           Padding(
             padding: EdgeInsets.all(16),
             child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => GalleryPicker()));
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final userId = widget.user["user_id"];
+                final hasSeenCameraInstructions =
+                    prefs.getBool('hasSeenCameraInstructions_$userId') ?? false;
+
+                if (hasSeenCameraInstructions) {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => GalleryPicker()));
+                } else {
+                  _showCameraInstructions(context);
+                }
               },
               icon: Icon(Icons.qr_code_scanner, color: Colors.white),
               label:
@@ -233,6 +245,64 @@ class _HomepageScreensState extends State<HomepageScreens> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showCameraInstructions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "How to take a good scan",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 15),
+              ListTile(
+                leading: Icon(Icons.wb_sunny, color: Colors.orange),
+                title: Text("Ensure good lighting"),
+                subtitle: Text("Take the photo in daylight or well-lit area."),
+              ),
+              ListTile(
+                leading: Icon(Icons.center_focus_strong, color: Colors.blue),
+                title: Text("Keep the leaf in focus"),
+                subtitle: Text("Make sure the affected area is clear and not blurry."),
+              ),
+              ListTile(
+                leading: Icon(Icons.filter_center_focus, color: Colors.green),
+                title: Text("Center the disease"),
+                subtitle: Text("Position the diseased part of the leaf in the middle of the frame."),
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userId = widget.user["user_id"];
+                  await prefs.setBool('hasSeenCameraInstructions_$userId', true);
+
+                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => GalleryPicker()));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF1B9D4A),
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text("I Understand, Proceed", style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -185,9 +185,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           "/home",
                         );
                       } on FirebaseAuthException catch (e) {
-                        print("Auth Error: ${e.message}");
+                        // Auth Error: ${e.message}
                       } catch (e) {
-                        print("Unexpected Error: $e");
+                        // Unexpected Error: $e
                       }
                     },
                     buttonColor: Colors.white,

@@ -108,8 +108,6 @@ class DiagnosticReportCard extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: image['file_name'] ?? '',
                           fit: BoxFit.fill,
-                          maxWidthDiskCache: exportCacheWidth,
-                          memCacheWidth: exportCacheWidth,
                           placeholder: (context, url) =>
                               Container(color: Colors.grey[200]),
                           errorWidget: (context, url, error) =>

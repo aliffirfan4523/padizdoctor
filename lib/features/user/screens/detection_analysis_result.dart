@@ -428,6 +428,36 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                                 ...diseaseSuggestions
                                     .map((sug) => buildSuggestionCard(sug))
                                     .toList(),
+                              const SizedBox(height: 12),
+                              Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border:
+                                      Border.all(color: Colors.orange.shade200),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(Icons.info_outline,
+                                        color: Colors.orange.shade800,
+                                        size: 20),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        "This analysis is AI-based and may not be 100% accurate. Please refer to an agricultural specialist for further confirmation.",
+                                        style: TextStyle(
+                                          color: Colors.orange.shade900,
+                                          fontSize: 13,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 24),
                             ],
                           ),
                         );

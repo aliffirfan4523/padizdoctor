@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:padizdoctor/core/widgets/Recent_Scans_List.dart';
 import 'package:padizdoctor/model/model.dart';
+import 'package:padizdoctor/features/user/services/my_history_service.dart';
 
 import '../../../core/widgets/reusable_header.dart';
 
@@ -16,6 +17,81 @@ class _MyHistoryState extends State<MyHistory> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = "";
   String _selectedFilter = "All";
+  bool _isSelectionMode = false;
+  Map<String, String> _selectedRecords = {};
+  bool _isDeleting = false;
+
+  void _toggleSelection(String recordId, String imageId) {
+    setState(() {
+      if (_selectedRecords.containsKey(recordId)) {
+        _selectedRecords.remove(recordId);
+        if (_selectedRecords.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedRecords[recordId] = imageId;
+      }
+    });
+  }
+
+  void _enterSelectionMode(String recordId, String imageId) {
+    setState(() {
+      _isSelectionMode = true;
+      _selectedRecords[recordId] = imageId;
+    });
+  }
+
+  void _exitSelectionMode() {
+    setState(() {
+      _isSelectionMode = false;
+      _selectedRecords.clear();
+    });
+  }
+
+  Future<void> _deleteSelected() async {
+    if (_selectedRecords.isEmpty) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Delete Scans"),
+        content: Text("Are you sure you want to delete ${_selectedRecords.length} scans?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _isDeleting = true);
+
+    try {
+      for (final entry in _selectedRecords.entries) {
+        await deleteDiagnosisRecord(entry.key, widget.currentUserId, entry.value);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Failed to delete scans: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isDeleting = false;
+        });
+        _exitSelectionMode();
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -30,19 +106,45 @@ class _MyHistoryState extends State<MyHistory> {
         slivers: [
           // 1. Beautiful Header
           SliverAppBar(
-            expandedHeight: 160,
+            expandedHeight: _isSelectionMode ? 60 : 160,
             floating: false,
             pinned: true,
+            leading: _isSelectionMode
+                ? IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    onPressed: _exitSelectionMode,
+                  )
+                : null,
+            actions: _isSelectionMode
+                ? [
+                    _isDeleting
+                        ? const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 16.0),
+                            child: SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2)),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.white),
+                            onPressed: _deleteSelected,
+                          ),
+                  ]
+                : null,
             flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'History',
-                style: TextStyle(
+              title: Text(
+                _isSelectionMode ? '${_selectedRecords.length} Selected' : 'History',
+                style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
+                  color: Colors.white,
                 ),
               ),
               centerTitle: true,
-              titlePadding: const EdgeInsets.only(bottom: 100),
+              titlePadding: _isSelectionMode
+                  ? const EdgeInsets.only(bottom: 16)
+                  : const EdgeInsets.only(bottom: 100),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -56,8 +158,10 @@ class _MyHistoryState extends State<MyHistory> {
                 ),
               ),
             ),
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(100),
+            bottom: _isSelectionMode
+                ? null
+                : PreferredSize(
+                    preferredSize: const Size.fromHeight(100),
               child: Container(
                 margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                 padding: const EdgeInsets.all(12),
@@ -127,6 +231,10 @@ class _MyHistoryState extends State<MyHistory> {
                   userId: widget.currentUserId,
                   searchQuery: _searchQuery,
                   filter: _selectedFilter,
+                  isSelectable: _isSelectionMode,
+                  selectedRecords: _selectedRecords,
+                  onSelectionChanged: _toggleSelection,
+                  onLongPress: _enterSelectionMode,
                 ),
               ]),
             ),

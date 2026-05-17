@@ -89,8 +89,6 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
   try {
     final streamedResponse = await request.send();
     final response = await http.Response.fromStream(streamedResponse);
-    print('Response Status: ${response.statusCode}');
-    print('Response Body: ${response.body}');
 
     // Cloudflare returns 5xx for tunnel offline
     if (response.statusCode >= 500) {
@@ -196,11 +194,7 @@ Future<String> addInferenceResultToHistory(
       locationName: locationName,
     );
 
-    print("--- STARTING DEEP DEBUG ---");
-    print(
-        "ADVICE LIST: ${llmResult.expert_advice.map((e) => e.diseaseName).toList()}");
-    print(
-        "YOLO LABELS FOUND: ${llmResult.detections.map((d) => d.label).toList()}");
+    // STARTING DEEP DEBUG
 
     for (var advice in llmResult.expert_advice) {
       String subId = "${nowId}_${advice.status}";
@@ -270,10 +264,9 @@ Future<String> addInferenceResultToHistory(
         SetOptions(merge: true));
 
     await batch.commit();
-    print("Saving inference result to history — recordId: $nowId");
     return nowId;
   } catch (e) {
-    print("Firebase Write Error: $e");
+    // Firebase Write Error
     throw Exception("Failed to save inference result: $e");
   }
 }
@@ -316,11 +309,9 @@ Future<String> uploadInferenceImage(
     // 4. Wait for completion and get the URL
     TaskSnapshot snapshot = await uploadTask;
     String downloadUrl = await snapshot.ref.getDownloadURL();
-
-    print("Image uploaded successfully: $downloadUrl");
     return downloadUrl;
   } catch (e) {
-    print("Firebase Upload Error: $e");
+    // Firebase Upload Error
     throw Exception("Failed to upload image");
   }
 }

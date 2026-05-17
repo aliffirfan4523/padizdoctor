@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:padizdoctor/features/user/services/user_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   AuthService._();
@@ -69,7 +70,7 @@ class AuthService {
 
       return userCredential;
     } catch (e) {
-      print("Google Sign-In Error: $e");
+      // Google Sign-In Error
       return null;
     }
   }
@@ -124,6 +125,12 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('hasSeenCameraInstructions_${user.uid}');
+    }
+
     await GoogleSignIn.instance.signOut();
     await _auth.signOut();
   }

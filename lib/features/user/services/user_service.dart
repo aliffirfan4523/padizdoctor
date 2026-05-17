@@ -55,18 +55,15 @@ class UserService {
     try {
       if (user != null) {
         await user.verifyBeforeUpdateEmail(newEmail);
-        print(
-            'Verification email sent to new address. Email will update after verification.');
+        // print('Verification email sent to new address. Email will update after verification.');
       }
     } on FirebaseAuthException catch (e) {
       // Handle specific Firebase Auth errors
-      print('Failed to update email: ${e.message}');
       if (e.code == 'requires-recent-login') {
         // Prompt the user to re-authenticate
-        print('User must re-authenticate before updating email.');
       }
     } catch (e) {
-      print('An error occurred: $e');
+      // An error occurred
     }
   }
 
@@ -116,10 +113,9 @@ class UserService {
 
         // 4. Delete the old random ID document
         await oldDoc.reference.delete();
-
-        print("Migrated $uid: Deleted ${oldDoc.id} -> Created 'stats'");
+        // Migration log
       }
     }
-    print("Migration Complete!");
+    // Migration Complete
   }
 }

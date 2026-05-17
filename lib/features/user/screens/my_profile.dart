@@ -51,7 +51,7 @@ class _MyProfileState extends State<MyProfile> {
             alignment: Alignment.center,
             children: [
               Container(
-                height: 180,
+                height: 120,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Colors.green.shade400, Colors.green.shade700],

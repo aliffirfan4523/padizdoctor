@@ -12,6 +12,9 @@ class ScanCard extends StatelessWidget {
   final String recordId;
   final String imageId;
   final String userId;
+  final bool isSelected;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onTapOverride;
 
   const ScanCard({
     super.key,
@@ -25,12 +28,16 @@ class ScanCard extends StatelessWidget {
     required this.recordId,
     required this.imageId,
     required this.userId,
+    this.isSelected = false,
+    this.onLongPress,
+    this.onTapOverride,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
+      onLongPress: onLongPress,
+      onTap: onTapOverride ?? () {
         // Handle card tap if needed
         Navigator.pushNamed(
           context,
@@ -45,8 +52,13 @@ class ScanCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          // Slightly lighter navy
-          border: Border.all(color: const Color.fromARGB(31, 75, 75, 75)),
+          color: isSelected ? Colors.green.withValues(alpha: 0.1) : null,
+          border: Border.all(
+            color: isSelected
+                ? Colors.green
+                : const Color.fromARGB(31, 75, 75, 75),
+            width: isSelected ? 2 : 1,
+          ),
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -89,7 +101,10 @@ class ScanCard extends StatelessWidget {
               children: [
                 Text(time, style: const TextStyle(fontSize: 12)),
                 const SizedBox(height: 8),
-                const Icon(Icons.chevron_right, color: Colors.white38),
+                if (isSelected)
+                  const Icon(Icons.check_circle, color: Colors.green)
+                else
+                  const Icon(Icons.chevron_right, color: Colors.black26),
               ],
             ),
           ],

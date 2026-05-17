@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/utils/bounding_box.dart';
 import '../../../../model/model.dart';
 
@@ -28,8 +29,7 @@ class _DetectionHeaderState extends State<DetectionHeader> {
   }
 
   void _loadImageSize() {
-    final ImageStream stream = Image.network(widget.imageUrl)
-        .image
+    final ImageStream stream = CachedNetworkImageProvider(widget.imageUrl)
         .resolve(const ImageConfiguration());
     stream.addListener(ImageStreamListener((ImageInfo info, bool _) {
       if (mounted) {
@@ -55,8 +55,8 @@ class _DetectionHeaderState extends State<DetectionHeader> {
           return Stack(
             children: [
               // Use fit: BoxFit.fill to ensure the coordinates map 1:1 to the widget size
-              Image.network(
-                widget.imageUrl,
+              CachedNetworkImage(
+                imageUrl: widget.imageUrl,
                 fit: BoxFit.fill,
                 width: constraints.maxWidth,
                 height: constraints.maxHeight,
@@ -78,8 +78,8 @@ class _DetectionHeaderState extends State<DetectionHeader> {
 }
 
 void getImageSize(String url, void Function(Size size) onResult) {
-  final image = Image.network(url);
-  final ImageStream stream = image.image.resolve(const ImageConfiguration());
+  final provider = CachedNetworkImageProvider(url);
+  final ImageStream stream = provider.resolve(const ImageConfiguration());
 
   stream.addListener(
     ImageStreamListener((ImageInfo info, bool _) {

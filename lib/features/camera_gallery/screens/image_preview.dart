@@ -378,7 +378,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
               } on Exception catch (inferenceError) {
                 setState(() => widget._isAnalyzing = false);
                 if (!context.mounted) return;
-                print("inferenceError: $inferenceError");
+                // inferenceError: $inferenceError
                 final errorStr = inferenceError.toString();
                 final isNetworkError = errorStr.contains('SocketException') ||
                     errorStr.contains('ClientException') ||

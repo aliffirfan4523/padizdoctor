@@ -216,7 +216,7 @@ class _GalleryPickerState extends State<GalleryPicker> {
           );
           await _runImageQualityCheck(result);
         } catch (e) {
-          print(e);
+          // e
         }
       },
       child: Container(

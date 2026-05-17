@@ -25,9 +25,24 @@ class IntroPage extends StatelessWidget {
         fit: StackFit.expand,
         children: [
           // Background image
-          Image.asset(
-            "assets/images/introgif.gif",
+          Image.network(
+            "https://firebasestorage.googleapis.com/v0/b/padizdoctor-fyp-6820b.firebasestorage.app/o/images%2Fintrogif.gif?alt=media&token=1da9d9a9-63ac-441a-929f-184678aa7f19",
             fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Container(
+                color: Colors.black,
+                child: const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                ),
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              return Image.asset(
+                "assets/images/intropage.png",
+                fit: BoxFit.cover,
+              );
+            },
           ),
 
           // Dark overlay for readability

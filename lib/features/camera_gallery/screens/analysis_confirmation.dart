@@ -8,6 +8,7 @@ import 'package:padizdoctor/app.dart';
 
 import '../../../model/model.dart';
 import '../../user/screens/detection_analysis_result.dart';
+import 'gallery.dart';
 
 // ─────────────────────────────────────────────
 // State enum
@@ -482,7 +483,13 @@ class AnalysisConfirmationScreen extends StatelessWidget {
               context: context,
               icon: Icons.camera_alt_outlined,
               label: 'Upload New Image',
-              onTap: () => _goHome(context),
+              onTap: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => GalleryPicker()),
+                  (route) => route.isFirst,
+                );
+              },
             ),
           ],
         );
@@ -505,7 +512,13 @@ class AnalysisConfirmationScreen extends StatelessWidget {
               context: context,
               icon: Icons.image_outlined,
               label: 'Choose Another Image',
-              onTap: () => _goHome(context),
+              onTap: () {
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (context) => GalleryPicker()),
+                  (route) => route.isFirst,
+                );
+              },
             ),
             const SizedBox(height: 14),
             GestureDetector(
