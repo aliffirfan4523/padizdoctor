@@ -25,32 +25,3 @@ PadizDoctor is an intelligent Flutter application designed to assist farmers and
 *   **Backend API:** FastAPI / Python (Machine Learning Inference & RAG/LLM pipelines)
 *   **Database & Storage:** Firebase Firestore & Firebase Cloud Storage
 *   **Authentication:** Firebase Auth
-
-## 🚀 Getting Started
-
-### Prerequisites
-*   Flutter SDK installed
-*   Firebase project configured (ensure `google-services.json` and `GoogleService-Info.plist` are placed in their respective directories).
-
-### Installation
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/padizdoctor.git
-   ```
-2. Navigate to the project directory:
-   ```bash
-   cd padizdoctor
-   ```
-3. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-4. Run the application:
-   ```bash
-   flutter run
-   ```
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to check the issues page.
