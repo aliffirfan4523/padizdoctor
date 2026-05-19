@@ -36,7 +36,7 @@ Container signInSignUpButton(BuildContext context, bool isLogin, Function onTap,
       child: Text(
         isLogin ? 'LOG IN' : 'SIGN UP',
         style: const TextStyle(
-            color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 16),
+            color: Colors.black87, fontWeight: FontWeight.bold, fontSize: 20),
       ),
     ),
   );
@@ -51,7 +51,7 @@ String formatTimestamp(Timestamp? timestamp) {
 // Helpers for dynamic UI
 Color getStatusColor(String? status) {
   final s = status?.toLowerCase() ?? "";
-  if (s == "healthy" || s == "none") return Colors.greenAccent;
+  if (s == "healthy" || s == "none") return Colors.green;
   if (s == "low") return Colors.yellowAccent;
   if (s == "moderate" || s == "medium") return Colors.orangeAccent;
   if (s == "high") return Colors.redAccent;

@@ -16,7 +16,7 @@ class ViewPasswordButton extends StatelessWidget {
       onPressed: onToggle,
       icon: Icon(
         isVisible ? Icons.visibility : Icons.visibility_off,
-        color: Theme.of(context).primaryColorDark,
+        color: Colors.black,
       ),
     );
   }

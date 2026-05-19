@@ -19,12 +19,16 @@ class AnalysisResultsScreen extends StatefulWidget {
   final String recordId;
   final String imageId;
   final String userId;
+  final Map<String, dynamic>? cachedImageData;
+  final Map<String, dynamic>? cachedRecordData;
 
   const AnalysisResultsScreen({
     super.key,
     required this.recordId,
     required this.imageId,
     required this.userId,
+    this.cachedImageData,
+    this.cachedRecordData,
   });
 
   @override
@@ -43,7 +47,12 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
   @override
   void initState() {
     super.initState();
-    _analysisFuture = fetchFullAnalysisData(widget.recordId, widget.imageId);
+    _analysisFuture = fetchFullAnalysisData(
+      widget.recordId,
+      widget.imageId,
+      cachedImageData: widget.cachedImageData,
+      cachedRecordData: widget.cachedRecordData,
+    );
   }
 
   Future<void> _shareAsImage(
@@ -261,7 +270,9 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                       ),
                     ),
                   ),
-                  NestedScrollView(
+                  Scrollbar(
+                    thumbVisibility: true,
+                    child: NestedScrollView(
                     headerSliverBuilder: (context, innerBoxIsScrolled) => [
                       SliverToBoxAdapter(
                         child: Padding(
@@ -463,6 +474,7 @@ class _AnalysisResultsScreenState extends State<AnalysisResultsScreen> {
                         );
                       }).toList(),
                     ),
+                  ),
                   ),
                 ]),
               ));

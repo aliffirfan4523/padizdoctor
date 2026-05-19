@@ -85,6 +85,8 @@ class MyApp extends StatelessWidget {
                     recordId: args.recordId,
                     imageId: args.imageId,
                     userId: args.userId,
+                    cachedImageData: args.cachedImageData,
+                    cachedRecordData: args.cachedRecordData,
                   ),
                 );
 

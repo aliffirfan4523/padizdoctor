@@ -13,8 +13,8 @@ Widget buildHeader({
       if (enableViewAll)
         TextButton(
             onPressed: onViewAll ?? () {},
-            child: const Text("View More",
-                style: const TextStyle(color: Colors.greenAccent))),
+            child:
+                const Text("View More", style: TextStyle(color: Colors.green))),
     ],
   );
 }

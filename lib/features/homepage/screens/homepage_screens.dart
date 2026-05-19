@@ -61,7 +61,7 @@ class _HomepageScreensState extends State<HomepageScreens> {
             Container(
               child: _buildAICard(),
             ),
-            SizedBox(height: 30),
+            SizedBox(height: 15),
             /*
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -273,19 +273,22 @@ class _HomepageScreensState extends State<HomepageScreens> {
               ListTile(
                 leading: Icon(Icons.center_focus_strong, color: Colors.blue),
                 title: Text("Keep the leaf in focus"),
-                subtitle: Text("Make sure the affected area is clear and not blurry."),
+                subtitle: Text(
+                    "Make sure the affected area is clear and not blurry."),
               ),
               ListTile(
                 leading: Icon(Icons.filter_center_focus, color: Colors.green),
                 title: Text("Center the disease"),
-                subtitle: Text("Position the diseased part of the leaf in the middle of the frame."),
+                subtitle: Text(
+                    "Position the diseased part of the leaf in the middle of the frame."),
               ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   final prefs = await SharedPreferences.getInstance();
                   final userId = widget.user["user_id"];
-                  await prefs.setBool('hasSeenCameraInstructions_$userId', true);
+                  await prefs.setBool(
+                      'hasSeenCameraInstructions_$userId', true);
 
                   Navigator.pop(context); // Close the bottom sheet
                   Navigator.push(context,
@@ -297,7 +300,8 @@ class _HomepageScreensState extends State<HomepageScreens> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: Text("I Understand, Proceed", style: TextStyle(color: Colors.white)),
+                child: Text("I Understand, Proceed",
+                    style: TextStyle(color: Colors.white)),
               ),
             ],
           ),

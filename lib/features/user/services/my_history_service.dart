@@ -83,7 +83,10 @@ class ScanService {
 
 // Logic to join the 4 collections needed for this screen
 Future<Map<String, dynamic>> fetchFullAnalysisData(
-    String recordId, String imageId) async {
+    String recordId, String imageId, {
+    Map<String, dynamic>? cachedImageData,
+    Map<String, dynamic>? cachedRecordData,
+}) async {
   final db = FirebaseFirestore.instance;
 
   try {
@@ -99,11 +102,13 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
 
     final resultsList = resultSnap.docs.map((doc) => doc.data()).toList();
 
-    // 2. Fetch the image document & record document
-    final imageDoc = await db.collection('ImageFile').doc(imageId).get();
-    if (!imageDoc.exists) throw "Image document not found";
+    // 2. Fetch image & record only if not already cached
+    final imageData = cachedImageData ??
+        (await db.collection('ImageFile').doc(imageId).get()).data();
+    if (imageData == null) throw "Image document not found";
 
-    final recordDoc = await db.collection('DiagnosisRecord').doc(recordId).get();
+    final recordData = cachedRecordData ??
+        (await db.collection('DiagnosisRecord').doc(recordId).get()).data();
 
     // 3. Fetch unique diseases found in results
     final diseaseIds =
@@ -125,8 +130,8 @@ Future<Map<String, dynamic>> fetchFullAnalysisData(
 
     return <String, dynamic>{
       'results': resultsList,
-      'image': imageDoc.data(),
-      'record': recordDoc.data(),
+      'image': imageData,
+      'record': recordData,
       'diseases': diseasesMap,
       'suggestions': suggestionSnap.docs.map((doc) {
         final data = doc.data() as Map<String, dynamic>;

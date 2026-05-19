@@ -7,6 +7,8 @@ import 'package:padizdoctor/features/user/services/my_history_service.dart';
 import 'package:padizdoctor/features/user/services/report_service.dart';
 import 'package:padizdoctor/features/user/widgets/widgets.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:padizdoctor/features/camera_gallery/screens/gallery.dart';
 
 import '../../../core/utils/format_Name.dart';
 import '../../../model/MyActivityData.dart';
@@ -25,6 +27,7 @@ class _MyActivityState extends State<MyActivity> {
     Colors.orange,
     Colors.blueAccent,
     Colors.purpleAccent,
+    Colors.teal,
   ];
 
   ActivityData _processData(
@@ -171,8 +174,7 @@ class _MyActivityState extends State<MyActivity> {
               floatingActionButton: scans.isEmpty
                   ? null
                   : FloatingActionButton(
-                      onPressed: () =>
-                          ReportService.generateAndDownloadReport(data),
+                      onPressed: () => _generateReport(context, data),
                       backgroundColor: Colors.green,
                       child: const Icon(Icons.download_rounded,
                           color: Colors.black87),
@@ -190,13 +192,20 @@ class _MyActivityState extends State<MyActivity> {
                             SizedBox(
                               height: MediaQuery.of(context).size.height * 0.8,
                               child: EmptyActivityState(
-                                onScanPressed: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Use the Camera tab below to start scanning!'),
-                                    ),
-                                  );
+                                onScanPressed: () async {
+                                  final prefs = await SharedPreferences.getInstance();
+                                  final userId = FirebaseAuth.instance.currentUser?.uid;
+                                  final hasSeenCameraInstructions =
+                                      prefs.getBool('hasSeenCameraInstructions_$userId') ?? false;
+
+                                  if (hasSeenCameraInstructions) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (context) => const GalleryPicker()),
+                                    );
+                                  } else {
+                                    _showCameraInstructions(context);
+                                  }
                                 },
                               ),
                             ),
@@ -238,6 +247,92 @@ class _MyActivityState extends State<MyActivity> {
         );
       },
     );
+  }
+
+  void _generateReport(BuildContext context, ActivityData data) {
+    final progressNotifier = ValueNotifier<String>('Preparing report...');
+    bool cancelled = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: ValueListenableBuilder<String>(
+              valueListenable: progressNotifier,
+              builder: (_, message, __) => Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 3,
+                      valueColor: AlwaysStoppedAnimation(Colors.green.shade700),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Compiling Report',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextButton(
+                    onPressed: () {
+                      cancelled = true;
+                      Navigator.of(ctx).pop();
+                    },
+                    child: Text(
+                      'Cancel',
+                      style: TextStyle(
+                        color: Colors.red.shade400,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    ReportService.generateAndDownloadReport(
+      data,
+      onProgress: (msg) {
+        if (!cancelled) progressNotifier.value = msg;
+      },
+    ).then((_) {
+      if (!cancelled && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+    }).catchError((e) {
+      if (!cancelled && Navigator.of(context).canPop()) {
+        Navigator.of(context).pop();
+      }
+      if (!cancelled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to generate report: $e')),
+        );
+      }
+    });
   }
 
   void _showCalendar(BuildContext context, ActivityData data) {
@@ -421,6 +516,8 @@ class _MyActivityState extends State<MyActivity> {
                               recordId: scan['record_id'],
                               imageId: scan['record']['image_id'],
                               userId: FirebaseAuth.instance.currentUser!.uid,
+                              cachedImageData: scan['image'],
+                              cachedRecordData: scan['record'],
                             ),
                           ),
                         );
@@ -558,6 +655,70 @@ class _MyActivityState extends State<MyActivity> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showCameraInstructions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "How to take a good scan",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 15),
+              const ListTile(
+                leading: Icon(Icons.wb_sunny, color: Colors.orange),
+                title: Text("Ensure good lighting"),
+                subtitle: Text("Take the photo in daylight or well-lit area."),
+              ),
+              const ListTile(
+                leading: Icon(Icons.center_focus_strong, color: Colors.blue),
+                title: Text("Keep the leaf in focus"),
+                subtitle: Text(
+                    "Make sure the affected area is clear and not blurry."),
+              ),
+              const ListTile(
+                leading: Icon(Icons.filter_center_focus, color: Colors.green),
+                title: Text("Center the disease"),
+                subtitle: Text(
+                    "Position the diseased part of the leaf in the middle of the frame."),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  final userId = FirebaseAuth.instance.currentUser?.uid;
+                  await prefs.setBool(
+                      'hasSeenCameraInstructions_$userId', true);
+
+                  Navigator.pop(context); // Close the bottom sheet
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GalleryPicker()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1B9D4A),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text("I Understand, Proceed",
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

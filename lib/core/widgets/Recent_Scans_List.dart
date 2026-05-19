@@ -100,10 +100,12 @@ class _RecentScansListState extends State<RecentScansList> {
         if (widget.filter != "All") {
           scans = scans.where((scan) {
             final severity = scan['result']?['severity']?.toString() ?? "None";
-            if (widget.filter == "Healthy")
+            if (widget.filter == "Healthy") {
               return severity == "None" || severity == "Healthy";
-            if (widget.filter == "Alerts")
+            }
+            if (widget.filter == "Alerts") {
               return severity != "None" && severity != "Healthy";
+            }
             return true;
           }).toList();
         }
@@ -143,13 +145,12 @@ class _RecentScansListState extends State<RecentScansList> {
 
             if (item is String) {
               return Padding(
-                padding: const EdgeInsets.only(top: 24.0, bottom: 12.0),
+                padding: const EdgeInsets.only(top: 8.0, bottom: 8.0),
                 child: Text(
                   item,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade700,
                   ),
                 ),
               );
@@ -178,6 +179,8 @@ class _RecentScansListState extends State<RecentScansList> {
                 statusColor: getStatusColor(scan['result']['severity']),
                 statusIcon: getStatusIcon(scan['result']['severity']),
                 isSelected: isSelected,
+                cachedImageData: scan['image'],
+                cachedRecordData: scan['record'],
                 onLongPress: widget.onLongPress != null
                     ? () => widget.onLongPress!(recordId, imageId)
                     : null,

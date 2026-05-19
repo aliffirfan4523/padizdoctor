@@ -55,7 +55,8 @@ class _MyHistoryState extends State<MyHistory> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Delete Scans"),
-        content: Text("Are you sure you want to delete ${_selectedRecords.length} scans?"),
+        content: Text(
+            "Are you sure you want to delete ${_selectedRecords.length} scans?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -75,7 +76,8 @@ class _MyHistoryState extends State<MyHistory> {
 
     try {
       for (final entry in _selectedRecords.entries) {
-        await deleteDiagnosisRecord(entry.key, widget.currentUserId, entry.value);
+        await deleteDiagnosisRecord(
+            entry.key, widget.currentUserId, entry.value);
       }
     } catch (e) {
       if (mounted) {
@@ -134,7 +136,9 @@ class _MyHistoryState extends State<MyHistory> {
                 : null,
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
-                _isSelectionMode ? '${_selectedRecords.length} Selected' : 'History',
+                _isSelectionMode
+                    ? '${_selectedRecords.length} Selected'
+                    : 'History',
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -162,69 +166,69 @@ class _MyHistoryState extends State<MyHistory> {
                 ? null
                 : PreferredSize(
                     preferredSize: const Size.fromHeight(100),
-              child: Container(
-                margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Search Bar
-                    TextField(
-                      controller: _searchController,
-                      onChanged: (val) => setState(() => _searchQuery = val),
-                      decoration: InputDecoration(
-                        hintText: "Search scan results...",
-                        prefixIcon: const Icon(Icons.search, size: 20),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear, size: 18),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() => _searchQuery = "");
-                                },
-                              )
-                            : null,
-                        filled: true,
-                        fillColor: Colors.grey.withValues(alpha: 0.1),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding:
-                            const EdgeInsets.symmetric(vertical: 10),
+                    child: Container(
+                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Search Bar
+                          TextField(
+                            controller: _searchController,
+                            onChanged: (val) =>
+                                setState(() => _searchQuery = val),
+                            decoration: InputDecoration(
+                              hintText: "Search scan results...",
+                              prefixIcon: const Icon(Icons.search, size: 20),
+                              suffixIcon: _searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear, size: 18),
+                                      onPressed: () {
+                                        _searchController.clear();
+                                        setState(() => _searchQuery = "");
+                                      },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: Colors.grey.withValues(alpha: 0.1),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              contentPadding:
+                                  const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          // Filter Chips
+                          Row(
+                            children: [
+                              _buildFilterChip("All"),
+                              const SizedBox(width: 8),
+                              _buildFilterChip("Alerts"),
+                              const SizedBox(width: 8),
+                              _buildFilterChip("Healthy"),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    // Filter Chips
-                    Row(
-                      children: [
-                        _buildFilterChip("All"),
-                        const SizedBox(width: 8),
-                        _buildFilterChip("Alerts"),
-                        const SizedBox(width: 8),
-                        _buildFilterChip("Healthy"),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  ),
           ),
-
           // 2. Scan List
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 RecentScansList(
@@ -260,7 +264,7 @@ class _MyHistoryState extends State<MyHistory> {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             color: isSelected ? Colors.white : Colors.grey.shade600,
           ),

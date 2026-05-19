@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import 'package:padizdoctor/app.dart';
@@ -15,6 +16,8 @@ class ScanCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback? onLongPress;
   final VoidCallback? onTapOverride;
+  final Map<String, dynamic>? cachedImageData;
+  final Map<String, dynamic>? cachedRecordData;
 
   const ScanCard({
     super.key,
@@ -31,24 +34,29 @@ class ScanCard extends StatelessWidget {
     this.isSelected = false,
     this.onLongPress,
     this.onTapOverride,
+    this.cachedImageData,
+    this.cachedRecordData,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onLongPress: onLongPress,
-      onTap: onTapOverride ?? () {
-        // Handle card tap if needed
-        Navigator.pushNamed(
-          context,
-          AppRoutes.analysisResult,
-          arguments: AnalysisResultsArgs(
-            recordId: recordId,
-            imageId: imageId,
-            userId: userId,
-          ),
-        );
-      },
+      onTap: onTapOverride ??
+          () {
+            // Handle card tap if needed
+            Navigator.pushNamed(
+              context,
+              AppRoutes.analysisResult,
+              arguments: AnalysisResultsArgs(
+                recordId: recordId,
+                imageId: imageId,
+                userId: userId,
+                cachedImageData: cachedImageData,
+                cachedRecordData: cachedRecordData,
+              ),
+            );
+          },
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -56,7 +64,7 @@ class ScanCard extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? Colors.green
-                : const Color.fromARGB(31, 75, 75, 75),
+                : const Color.fromARGB(255, 127, 146, 128),
             width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(16),
@@ -68,8 +76,30 @@ class ScanCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(imagePath,
-                      width: 64, height: 64, fit: BoxFit.cover),
+                  child: CachedNetworkImage(
+                      imageUrl: imagePath,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        width: 64,
+                        height: 64,
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        width: 64,
+                        height: 64,
+                        color: Colors.grey.shade200,
+                        child: const Icon(Icons.broken_image, size: 24),
+                      ),
+                  ),
                 ),
                 Positioned(
                   bottom: -2,
@@ -104,7 +134,7 @@ class ScanCard extends StatelessWidget {
                 if (isSelected)
                   const Icon(Icons.check_circle, color: Colors.green)
                 else
-                  const Icon(Icons.chevron_right, color: Colors.black26),
+                  const Icon(Icons.chevron_right),
               ],
             ),
           ],
