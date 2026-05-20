@@ -120,27 +120,16 @@ Future<Map<String, dynamic>> inferenceImage(PlatformFile imageFile) async {
   }
 }
 
-Future<PlatformFile> pickPaddyImage() async {
+Future<PlatformFile?> pickPaddyImage() async {
   FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.any,
+    type: FileType.image,
     allowMultiple: false,
   );
 
-  try {
-    if (result != null) {
-      String? filepath = result.files.single.path;
-
-      if (filepath != null) {
-        PlatformFile file = result.files.single;
-        return file;
-      } else {
-        return Future.error('File path is null');
-      }
-    }
-  } catch (e) {
-    rethrow;
+  if (result != null && result.files.isNotEmpty) {
+    return result.files.single;
   }
-  throw Exception('No file was picked');
+  return null;
 }
 
 /// Saves inference results to Firestore and returns the [recordId] (nowId)
