@@ -52,10 +52,10 @@ String formatTimestamp(Timestamp? timestamp) {
 Color getStatusColor(String? status) {
   final s = status?.toLowerCase() ?? "";
   if (s == "healthy" || s == "none") return Colors.green;
-  if (s == "low") return Colors.yellowAccent;
-  if (s == "moderate" || s == "medium") return Colors.orangeAccent;
-  if (s == "high") return Colors.redAccent;
-  if (s == "very high") return Colors.red;
+  if (s == "low") return const Color.fromARGB(255, 255, 145, 0);
+  if (s == "moderate" || s == "medium") return const Color.fromARGB(255, 255, 94, 0);
+  if (s == "high") return const Color.fromARGB(255, 255, 18, 0);
+  if (s == "very high") return const Color.fromARGB(255, 161, 6, 0);
   return Colors.grey;
 }
 

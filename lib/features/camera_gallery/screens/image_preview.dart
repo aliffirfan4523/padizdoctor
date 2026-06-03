@@ -100,6 +100,35 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
     throw Exception('Unexpected bbox format: ${bbox.runtimeType}');
   }
 
+  /// Parses the treatment field which may be a plain String or a Map
+  /// (e.g. {"organic": "...", "chemical": "..."}).
+  /// Prefers `treatment_text` (pre-flattened string) when available.
+  static String _parseTreatment(Map<String, dynamic> detail) {
+    // 1. Prefer treatment_text if present (always a string).
+    if (detail['treatment_text'] is String) {
+      return detail['treatment_text'] as String;
+    }
+
+    final raw = detail['treatment'];
+
+    // 2. Already a string – use directly.
+    if (raw is String) return raw;
+
+    // 3. It's a Map – join the values.
+    if (raw is Map) {
+      final parts = <String>[];
+      raw.forEach((key, value) {
+        if (value is String && value.isNotEmpty) {
+          parts.add('${key[0].toUpperCase()}${key.substring(1)}: $value');
+        }
+      });
+      return parts.isNotEmpty ? parts.join('\n') : 'Consult a specialist.';
+    }
+
+    // 4. Fallback.
+    return 'Consult a specialist.';
+  }
+
   /// Parses expert_advice, which always has the shape:
   /// {
   ///   "status": "success",
@@ -143,7 +172,7 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
           diseaseName: entry.key,
           status: entry.key,
           severity: detail['severity'] ?? 'unknown',
-          treatment: detail['treatment'] ?? 'Consult a specialist.',
+          treatment: _parseTreatment(detail),
           symptoms: (detail['symptoms'] as List? ?? []).join(', '),
           source: detail['source'] ?? 'AI Inference',
         ));
@@ -329,6 +358,39 @@ class _ReviewCapturePageState extends State<ReviewCapturePage>
           height: 54,
           child: ElevatedButton.icon(
             onPressed: () async {
+              if (widget._isAnalyzing) {
+                final bool? confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: Row(
+                      children: [
+                        Icon(Icons.cancel, color: Colors.red.shade600),
+                        const SizedBox(width: 10),
+                        const Text("Cancel Scan"),
+                      ],
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    content: const Text("Do you want to cancel the ongoing scan?"),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false), 
+                        child: Text("No", style: TextStyle(color: Colors.grey.shade600)),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600, foregroundColor: Colors.white),
+                        child: const Text("Yes, Cancel"),
+                      ),
+                    ],
+                  ),
+                );
+                
+                if (confirm == true) {
+                  Navigator.pop(context); // Go back to camera screen
+                }
+                return;
+              }
+
               // ── Phase 1: API inference ──────────────────────────────────
               // Inner try/catch handles ML/API errors (blurry image, server
               // errors, bad format). On failure → AnalysisFailed screen.

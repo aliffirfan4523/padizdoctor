@@ -16,15 +16,6 @@ import 'features/onboarding/services/splash_decider.dart';
 import 'features/settings/services/settings_controller.dart';
 import 'features/settings/screens/settings_view.dart';
 
-// ─── Route name constants ────────────────────────────────────────────────────
-/// Central registry of all named routes in the app.
-/// Use these constants everywhere — never hard-code the strings.
-
-// ─── Typed argument classes ──────────────────────────────────────────────────
-
-// ─── App widget ──────────────────────────────────────────────────────────────
-
-/// The Widget that configures your application.
 class MyApp extends StatelessWidget {
   const MyApp({
     super.key,

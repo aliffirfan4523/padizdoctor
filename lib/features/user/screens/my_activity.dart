@@ -174,7 +174,7 @@ class _MyActivityState extends State<MyActivity> {
               floatingActionButton: scans.isEmpty
                   ? null
                   : FloatingActionButton(
-                      heroTag: 'my_activity_fab',
+                      heroTag: null,
                       onPressed: () => _generateReport(context, data),
                       backgroundColor: Colors.green,
                       child: const Icon(Icons.download_rounded,
