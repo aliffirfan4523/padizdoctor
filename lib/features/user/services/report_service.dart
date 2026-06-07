@@ -18,7 +18,9 @@ class ReportService {
   static Future<void> generateAndDownloadReport(
     ActivityData data, {
     void Function(String message)? onProgress,
+    bool Function()? isCancelled,
   }) async {
+    if (isCancelled?.call() ?? false) return;
     onProgress?.call('Loading fonts...');
     final fontBase = await PdfGoogleFonts.poppinsRegular();
     final fontBold = await PdfGoogleFonts.poppinsBold();
@@ -135,6 +137,7 @@ class ReportService {
     final db = FirebaseFirestore.instance;
     final scansToDetail = data.scans.take(20).toList();
     for (int i = 0; i < scansToDetail.length; i++) {
+      if (isCancelled?.call() ?? false) return;
       onProgress
           ?.call('Processing record ${i + 1} of ${scansToDetail.length}...');
 
@@ -151,12 +154,15 @@ class ReportService {
             .collection('DiagnosisResult')
             .where('record_id', isEqualTo: recordId)
             .get();
+        if (isCancelled?.call() ?? false) return;
         allResults = resultSnap.docs.map((d) => d.data()).toList();
         for (final r in allResults) {
           final boxes = r['bounding_boxes'] as List<dynamic>? ?? [];
           allBoxes.addAll(boxes);
         }
       } catch (_) {}
+
+      if (isCancelled?.call() ?? false) return;
 
       // ── Fetch diseases for each result ──
       final diseaseIds = allResults
@@ -168,10 +174,13 @@ class ReportService {
         final diseaseSnaps = await Future.wait(
           diseaseIds.map((id) => db.collection('Disease').doc(id!).get()),
         );
+        if (isCancelled?.call() ?? false) return;
         for (final doc in diseaseSnaps) {
           if (doc.exists) diseasesMap[doc.id] = doc.data() ?? {};
         }
       } catch (_) {}
+
+      if (isCancelled?.call() ?? false) return;
 
       // ── Fetch treatment suggestions ──
       List<Map<String, dynamic>> suggestions = [];
@@ -180,6 +189,7 @@ class ReportService {
             .collection('TreatmentSuggestion')
             .where('record_id', isEqualTo: recordId)
             .get();
+        if (isCancelled?.call() ?? false) return;
         suggestions = sugSnap.docs.map((d) => d.data()).toList();
       } catch (_) {}
 
@@ -205,9 +215,11 @@ class ReportService {
       if (imageUrl != null && imageUrl.isNotEmpty) {
         try {
           final response = await http.get(Uri.parse(imageUrl));
+          if (isCancelled?.call() ?? false) return;
           if (response.statusCode == 200) {
             final annotatedBytes =
                 await _drawBoundingBoxes(response.bodyBytes, allBoxes);
+            if (isCancelled?.call() ?? false) return;
             final pdfImage = pw.MemoryImage(annotatedBytes);
             imageWidget = pw.Center(
               child: pw.Image(pdfImage,
@@ -334,6 +346,7 @@ class ReportService {
       );
     }
 
+    if (isCancelled?.call() ?? false) return;
     onProgress?.call('Finalizing PDF...');
 
     // Show preview and print/save options

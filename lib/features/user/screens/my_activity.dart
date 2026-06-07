@@ -320,6 +320,7 @@ class _MyActivityState extends State<MyActivity> {
       onProgress: (msg) {
         if (!cancelled) progressNotifier.value = msg;
       },
+      isCancelled: () => cancelled,
     ).then((_) {
       if (!cancelled && Navigator.of(context).canPop()) {
         Navigator.of(context).pop();
